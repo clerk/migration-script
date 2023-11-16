@@ -6,13 +6,9 @@
   "bin": "./index.ts",
   "keywords": [],
   "license": "ISC",
-  "devDependencies": {
-    "@types/react": "^18.2.37",
-    "tsx": "^4.1.1"
-  },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.12.21",
     "dotenv": "^16.3.1",
-    "ink": "^4.4.1",
-    "react": "^18.2.0"
+    "zod": "^3.22.4"
   }
 }
