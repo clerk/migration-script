@@ -17,7 +17,6 @@ if (SECRET_KEY.split('_')[1] !== 'live' && IMPORT_TO_DEV === 'false') {
   throw new Error("The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_ISNTANCE' in your .env to 'true'.")
 }
 
-
 const userSchema = z.object({
   userId: z.string(),
   email: z.string().email(),
@@ -61,12 +60,6 @@ const createUser = (userData: User) =>
 let migrated = 0;
 let alreadyExists = 0;
 
-// Read the user data from the JSON file
-const getUserData = async () =>
-  userSchema
-    .array()
-    .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
-
 async function processUserToClerk(userData: User) {
   try {
     await createUser(userData);
@@ -96,9 +89,12 @@ async function processUserToClerk(userData: User) {
 
 async function main() {
   console.log("Validating user data...");
-  const validatedUserData = await getUserData();
+  const validatedUserData = userSchema
+    .array()
+    .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
 
   for (const userData of validatedUserData) {
+    await new Promise((r) => setTimeout(r, DELAY ?? 1_000));
     await processUserToClerk(userData);
   }
 
