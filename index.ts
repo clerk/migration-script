@@ -33,7 +33,7 @@ const userSchema = z.object({
 
 type User = z.infer<typeof userSchema>;
 
-const attemptCreateUser = (userData: User) =>
+const createUser = (userData: User) =>
   userData.password
     ? clerkClient.users.createUser({
         externalId: userData.userId,
@@ -60,9 +60,9 @@ const getUserData = async () =>
     .array()
     .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
 
-async function createUser(userData: User) {
+async function processUserToClerk(userData: User) {
   try {
-    await attemptCreateUser(userData);
+    await createUser(userData);
 
     migrated++;
   } catch (error) {
@@ -72,12 +72,14 @@ async function createUser(userData: User) {
       return;
     }
 
+    // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
     if (error.status === 429) {
       console.log(`Waiting for rate limit to reset`);
       await new Promise((r) => setTimeout(r, retryDelay));
 
       console.log("Retrying");
-      return createUser(userData);
+      // conditional recursion
+      return processUserToClerk(userData);
     }
 
     fs.writeFileSync("./migration-log.json", JSON.stringify(error, null, 2));
@@ -85,12 +87,12 @@ async function createUser(userData: User) {
   }
 }
 
-async function createUsers() {
+async function main() {
   console.log("Validating user data...");
   const validatedUserData = await getUserData();
 
   for (const userData of validatedUserData) {
-    await createUser(userData);
+    await processUserToClerk(userData);
   }
 
   return validatedUserData;
@@ -100,7 +102,7 @@ console.log(`Clerk User Migration Utility`);
 
 console.log(`Migrating users...`);
 
-createUsers().then(() => {
+main().then(() => {
   console.log(`${migrated} users migrated`);
   console.log(`${alreadyExists} users already exist`);
 });
