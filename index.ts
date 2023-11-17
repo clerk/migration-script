@@ -75,7 +75,7 @@ async function processUserToClerk(userData: User) {
     // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
     if (error.status === 429) {
       console.log(`Waiting for rate limit to reset`);
-      await new Promise((r) => setTimeout(r, RETRY_DELAY));
+      cooldown();
 
       console.log("Retrying");
       // conditional recursion
@@ -87,6 +87,10 @@ async function processUserToClerk(userData: User) {
   }
 }
 
+async function cooldown() {
+  await new Promise((r) => setTimeout(r, DELAY ?? 1_000));
+}
+
 async function main() {
   console.log("Validating user data...");
   const validatedUserData = userSchema
@@ -94,7 +98,7 @@ async function main() {
     .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
 
   for (const userData of validatedUserData) {
-    await new Promise((r) => setTimeout(r, DELAY ?? 1_000));
+    cooldown();
     await processUserToClerk(userData);
   }
 
