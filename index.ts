@@ -33,8 +33,6 @@ const userSchema = z.object({
 
 type User = z.infer<typeof userSchema>;
 
-const errors: any[] = [];
-
 const attemptCreateUser = (userData: User) =>
   userData.password
     ? clerkClient.users.createUser({
@@ -69,7 +67,7 @@ async function createUser(userData: User) {
     migrated++;
   } catch (error) {
     if (error.status === 422) {
-      console.log(`User already exits`);
+      fs.writeFileSync("./migration-log.json", JSON.stringify(error, null, 2));
       alreadyExists++;
       return;
     }
@@ -82,7 +80,7 @@ async function createUser(userData: User) {
       return createUser(userData);
     }
 
-    errors.push(error);
+    fs.writeFileSync("./migration-log.json", JSON.stringify(error, null, 2));
     console.error("Error creating user:", error);
   }
 }
@@ -91,13 +89,9 @@ async function createUsers() {
   console.log("Validating user data...");
   const validatedUserData = await getUserData();
 
-  console.log("Migrating users");
-
-  for (let i = 0; i < validatedUserData.length; i++) {
-    await createUser(validatedUserData[i]);
+  for (const userData of validatedUserData) {
+    await createUser(userData);
   }
-
-  await fs.promises.writeFile("errors.json", JSON.stringify(errors, null, 2));
 
   return validatedUserData;
 }
