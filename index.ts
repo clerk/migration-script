@@ -97,7 +97,7 @@ async function main() {
     .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
 
   for (const userData of validatedUserData) {
-    await new Promise((r) => setTimeout(r, process.env.DELAY || 1_000));
+    await new Promise((r) => setTimeout(r, process.env.DELAY ?? 1_000));
     await processUserToClerk(userData);
   }
 
