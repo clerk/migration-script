@@ -7,15 +7,18 @@ import clerkClient from "@clerk/clerk-sdk-node";
 
 const retryDelay = 10_000; // 10 seconds
 const secretKey = process.env.CLERK_SECRET_KEY;
-const importToDev = process.env.IMPORT_TO_DEV_INSTANCE
+const importToDev = process.env.IMPORT_TO_DEV_INSTANCE;
 if (!secretKey || !importToDev) {
-  throw new Error("CLERK_SECRET_KEY is required. Please copy .env.example to .env and add your key.");
+  throw new Error(
+    "CLERK_SECRET_KEY is required. Please copy .env.example to .env and add your key."
+  );
 }
 
-if (secretKey.split('_')[1] !== 'live' && importToDev === 'false') {
-  throw new Error("The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_ISNTANCE' in your .env to 'true'.")
+if (secretKey.split("_")[1] !== "live" && importToDev === "false") {
+  throw new Error(
+    "The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_ISNTANCE' in your .env to 'true'."
+  );
 }
-
 
 const userSchema = z.object({
   userId: z.string(),
@@ -42,29 +45,23 @@ type User = z.infer<typeof userSchema>;
 const createUser = (userData: User) =>
   userData.password
     ? clerkClient.users.createUser({
-      externalId: userData.userId,
-      emailAddress: [userData.email],
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      passwordDigest: userData.password,
-      passwordHasher: userData.passwordHasher,
-    })
+        externalId: userData.userId,
+        emailAddress: [userData.email],
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        passwordDigest: userData.password,
+        passwordHasher: userData.passwordHasher,
+      })
     : clerkClient.users.createUser({
-      externalId: userData.userId,
-      emailAddress: [userData.email],
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      skipPasswordRequirement: true,
-    });
+        externalId: userData.userId,
+        emailAddress: [userData.email],
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        skipPasswordRequirement: true,
+      });
 
 let migrated = 0;
 let alreadyExists = 0;
-
-// Read the user data from the JSON file
-const getUserData = async () =>
-  userSchema
-    .array()
-    .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
 
 async function processUserToClerk(userData: User) {
   try {
@@ -95,9 +92,12 @@ async function processUserToClerk(userData: User) {
 
 async function main() {
   console.log("Validating user data...");
-  const validatedUserData = await getUserData();
+  const validatedUserData = userSchema
+    .array()
+    .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
 
   for (const userData of validatedUserData) {
+    await new Promise((r) => setTimeout(r, process.env.DELAY || 1_000));
     await processUserToClerk(userData);
   }
 
