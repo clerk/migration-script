@@ -8,13 +8,17 @@ import clerkClient from "@clerk/clerk-sdk-node";
 const DELAY = process.env.DELAY;
 const RETRY_DELAY = process.env.RETRY_DELAY;
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE
+const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE;
 if (!SECRET_KEY || !IMPORT_TO_DEV || !DELAY || !RETRY_DELAY) {
-  throw new Error("CLERK_SECRET_KEY is required. Please copy .env.example to .env and add your key.");
+  throw new Error(
+    "CLERK_SECRET_KEY is required. Please copy .env.example to .env and add your key."
+  );
 }
 
-if (SECRET_KEY.split('_')[1] !== 'live' && IMPORT_TO_DEV === 'false') {
-  throw new Error("The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_ISNTANCE' in your .env to 'true'.")
+if (SECRET_KEY.split("_")[1] !== "live" && IMPORT_TO_DEV === "false") {
+  throw new Error(
+    "The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_ISNTANCE' in your .env to 'true'."
+  );
 }
 
 const userSchema = z.object({
@@ -42,20 +46,20 @@ type User = z.infer<typeof userSchema>;
 const createUser = (userData: User) =>
   userData.password
     ? clerkClient.users.createUser({
-      externalId: userData.userId,
-      emailAddress: [userData.email],
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      passwordDigest: userData.password,
-      passwordHasher: userData.passwordHasher,
-    })
+        externalId: userData.userId,
+        emailAddress: [userData.email],
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        passwordDigest: userData.password,
+        passwordHasher: userData.passwordHasher,
+      })
     : clerkClient.users.createUser({
-      externalId: userData.userId,
-      emailAddress: [userData.email],
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      skipPasswordRequirement: true,
-    });
+        externalId: userData.userId,
+        emailAddress: [userData.email],
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        skipPasswordRequirement: true,
+      });
 
 let migrated = 0;
 let alreadyExists = 0;
