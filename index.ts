@@ -5,7 +5,7 @@ import * as fs from "fs";
 import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
 
-const DELAY = process.env.DELAY;
+const DELAY = Number(process.env.DELAY ?? 1_000);
 const RETRY_DELAY = process.env.RETRY_DELAY;
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE;
@@ -92,7 +92,7 @@ async function processUserToClerk(userData: User) {
 }
 
 async function cooldown() {
-  await new Promise((r) => setTimeout(r, DELAY ?? 1_000));
+  await new Promise((r) => setTimeout(r, DELAY));
 }
 
 async function main() {
