@@ -99,7 +99,7 @@ async function main() {
   console.log("Validating user data...");
   const validatedUserData = userSchema
     .array()
-    .parse(JSON.parse(await fs.promises.readFile("users.json", "utf-8")));
+    .parse(JSON.parse(fs.readFileSync("users.json", "utf-8")));
 
   for (const userData of validatedUserData) {
     cooldown();
