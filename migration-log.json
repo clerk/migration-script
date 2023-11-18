@@ -1,0 +1,177 @@
+{
+  "status": 422,
+  "clerkTraceId": "2b88495d57f0c0e42866a0362397a52e",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "d13d0fb79ed8ae24e0a3993cd3de250f",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "9bb811d32caff00c39faa67193cd3bad",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "ecacc4d7204a93384b832cf7899911e2",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "9a7f983592bc6d675877189e1bad9c80",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "a8bfa05573720971d8397bc82d589388",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "c53b13af6eedd30e7d194e70a7e30116",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "b2cf3864ff7e2c40692b86e06551d840",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "e958c3fda0ddf9fee4a1f99be3c34c00",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "fb5d86724274c645a36537b47abff3e1",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "a1fe535327e16c116ec6312de0110443",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "d7b3bcbca3df71329b347192b7b247ec",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "bd9f0ea8cb809cb32583d45acbb49706",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "status": 422,
+  "clerkTraceId": "a422718e6626b5e33efb3417780130e5",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    }
+  ]
+}{
+  "issues": [
+    {
+      "received": "",
+      "code": "invalid_enum_value",
+      "options": [
+        "argon2i",
+        "argon2id",
+        "bcrypt",
+        "md5",
+        "pbkdf2_sha256",
+        "pbkdf2_sha256_django",
+        "pbkdf2_sha1",
+        "scrypt_firebase"
+      ],
+      "path": [
+        "passwordHasher"
+      ],
+      "message": "Invalid enum value. Expected 'argon2i' | 'argon2id' | 'bcrypt' | 'md5' | 'pbkdf2_sha256' | 'pbkdf2_sha256_django' | 'pbkdf2_sha1' | 'scrypt_firebase', received ''"
+    }
+  ],
+  "name": "ZodError"
+}

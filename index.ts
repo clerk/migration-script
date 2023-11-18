@@ -66,12 +66,16 @@ let alreadyExists = 0;
 
 async function processUserToClerk(userData: User) {
   try {
-    await createUser(userData);
+    const parsedUserData = userSchema.safeParse(userData);
+    if (!parsedUserData.success) {
+      throw parsedUserData.error;
+    }
+    await createUser(parsedUserData.data);
 
     migrated++;
   } catch (error) {
     if (error.status === 422) {
-      fs.writeFileSync("./migration-log.json", JSON.stringify(error, null, 2));
+      fs.appendFileSync("./migration-log.json", JSON.stringify(error, null, 2));
       alreadyExists++;
       return;
     }
@@ -79,14 +83,14 @@ async function processUserToClerk(userData: User) {
     // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
     if (error.status === 429) {
       console.log(`Waiting for rate limit to reset`);
-      cooldown();
+      await cooldown();
 
       console.log("Retrying");
       // conditional recursion
       return processUserToClerk(userData);
     }
 
-    fs.writeFileSync("./migration-log.json", JSON.stringify(error, null, 2));
+    fs.appendFileSync("./migration-log.json", JSON.stringify(error, null, 2));
     console.error("Error creating user:", error);
   }
 }
@@ -97,23 +101,20 @@ async function cooldown() {
 
 async function main() {
   console.log("Validating user data...");
-  const validatedUserData = userSchema
-    .array()
-    .parse(JSON.parse(fs.readFileSync("users.json", "utf-8")));
+  const parsedUserData = JSON.parse(fs.readFileSync("users.json", "utf-8"));
 
-  for (const userData of validatedUserData) {
-    cooldown();
+  for (const userData of parsedUserData) {
+    await cooldown();
     await processUserToClerk(userData);
   }
 
-  return validatedUserData;
+  return;
 }
 
 console.log(`Clerk User Migration Utility`);
-
 console.log(`Migrating users...`);
 
 main().then(() => {
   console.log(`${migrated} users migrated`);
-  console.log(`${alreadyExists} users already exist`);
+  console.log(`${alreadyExists} users failed to upload`);
 });

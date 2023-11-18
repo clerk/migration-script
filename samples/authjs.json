@@ -1,4 +1,3 @@
-
 [
   {
     "userId": "1",
@@ -85,7 +84,7 @@
     "email": "user11@example.com",
     "firstName": "User",
     "lastName": "Eleven",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -93,7 +92,7 @@
     "email": "user12@example.com",
     "firstName": "User",
     "lastName": "Twelve",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -101,7 +100,7 @@
     "email": "user13@example.com",
     "firstName": "User",
     "lastName": "Thirteen",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -109,7 +108,7 @@
     "email": "user14@example.com",
     "firstName": "User",
     "lastName": "Fourteen",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -117,7 +116,7 @@
     "email": "user15@example.com",
     "firstName": "User",
     "lastName": "Fifteen",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -125,7 +124,7 @@
     "email": "user16@example.com",
     "firstName": "User",
     "lastName": "Sixteen",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -133,7 +132,7 @@
     "email": "user17@example.com",
     "firstName": "User",
     "lastName": "Seventeen",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -141,7 +140,7 @@
     "email": "user18@example.com",
     "firstName": "User",
     "lastName": "Eighteen",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -149,7 +148,7 @@
     "email": "user19@example.com",
     "firstName": "User",
     "lastName": "Nineteen",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -157,7 +156,7 @@
     "email": "user20@example.com",
     "firstName": "User",
     "lastName": "Twenty",
-    "password":  "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
+    "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
   {
@@ -398,8 +397,8 @@
     "firstName": "User50",
     "lastName": "Doe50",
     "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
-    "passwordHasher":
-	},
+    "passwordHasher": "bcrypt"
+  },
   {
     "userId": "51",
     "email": "john@example.com",
@@ -480,7 +479,7 @@
     "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
-	  {
+  {
     "userId": "61",
     "email": "alice@example.com",
     "firstName": "Alice",
@@ -560,7 +559,7 @@
     "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
     "passwordHasher": "bcrypt"
   },
-	{
+  {
     "userId": "71",
     "email": "user71@example.com",
     "firstName": "Alice",
@@ -630,7 +629,7 @@
     "firstName": "Ivy",
     "lastName": "Taylor",
     "password": "$2a$12$9HhLqMJxqBKhlZasxjlhger67GFcC4aOAtpcU.THpcSLiQve4mq6.",
-    "passwordHasher": "bcrypt"
+    "passwordHasher": ""
   },
   {
     "userId": "80",
