@@ -4,7 +4,7 @@ config();
 import * as fs from "fs";
 import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
-import ora from "ora";
+import ora, { Ora } from "ora";
 
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const DELAY = Number(process.env.DELAY ?? 1_000);
@@ -65,9 +65,6 @@ const createUser = (userData: User) =>
 let migrated = 0;
 let alreadyExists = 0;
 
-console.log(`Clerk User Migration Utility`);
-const spinner = ora(`Migrating users...`).start();
-
 async function processUserToClerk(userData: User) {
   try {
     const parsedUserData = userSchema.safeParse(userData);
@@ -108,8 +105,13 @@ async function cooldown() {
   await new Promise((r) => setTimeout(r, DELAY));
 }
 
+let spinner: Ora;
+
 async function main() {
   const parsedUserData = JSON.parse(fs.readFileSync("users.json", "utf-8"));
+
+  console.log(`Clerk User Migration Utility`);
+  spinner = ora(`Migrating users...`).start();
 
   for (const userData of parsedUserData) {
     await cooldown();
@@ -120,7 +122,7 @@ async function main() {
 }
 
 main().then(() => {
-  spinner.stop();
+  spinner?.stop();
   console.log(`${migrated} users migrated`);
   console.log(`${alreadyExists} users failed to upload`);
 });
