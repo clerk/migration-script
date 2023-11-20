@@ -2,16 +2,16 @@
 
 ## Description
 
-This repository contains a script that takes a CSV or JSON file as input, containing a list of users, and creates a user in Clerk using Clerk's backend API. The script takes rate limits and duplicates into account.
+This repository contains a script that takes a JSON file as input, containing a list of users, and creates a user in Clerk using Clerk's backend API. The script respects rate limits and handles errors.
 
 ## Getting Started
 
 Clone the repository and install the dependencies.
 
 ```bash
-git clone github.com/clerk/user-import-script
+git clone github.com/clerk/migration-script
 
-cd user-import script
+cd migration-script
 
 bun install
 ```
