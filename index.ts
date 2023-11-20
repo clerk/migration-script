@@ -6,11 +6,11 @@ import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
 import ora from "ora";
 
-const DELAY = Number(process.env.DELAY ?? 1_000);
-const RETRY_DELAY = process.env.RETRY_DELAY;
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE;
-if (!SECRET_KEY || !IMPORT_TO_DEV || !DELAY || !RETRY_DELAY) {
+const DELAY = Number(process.env.DELAY ?? 1_000);
+const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
+
+if (!SECRET_KEY) {
   throw new Error(
     "CLERK_SECRET_KEY is required. Please copy .env.example to .env and add your key."
   );
