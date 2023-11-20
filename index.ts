@@ -18,7 +18,7 @@ if (!SECRET_KEY) {
 
 if (SECRET_KEY.split("_")[1] !== "live" && IMPORT_TO_DEV === "false") {
   throw new Error(
-    "The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_ISNTANCE' in your .env to 'true'."
+    "The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_INSTANCE' in your .env to 'true'."
   );
 }
 
