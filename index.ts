@@ -79,7 +79,10 @@ async function processUserToClerk(userData: User) {
     migrated++;
   } catch (error) {
     if (error.status === 422) {
-      fs.appendFileSync("./migration-log.json", JSON.stringify(error, null, 2));
+      fs.appendFileSync(
+        "./migration-log.json",
+        JSON.stringify({ userId: userData.userId, ...error }, null, 2)
+      );
       alreadyExists++;
       return;
     }
@@ -94,7 +97,10 @@ async function processUserToClerk(userData: User) {
       return processUserToClerk(userData);
     }
 
-    fs.appendFileSync("./migration-log.json", JSON.stringify(error, null, 2));
+    fs.appendFileSync(
+      "./migration-log.json",
+      JSON.stringify({ userId: userData.userId, ...error }, null, 2)
+    );
   }
 }
 
