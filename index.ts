@@ -62,6 +62,14 @@ const createUser = (userData: User) =>
         skipPasswordRequirement: true,
       });
 
+const now = new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
+function appendLog(payload: any) {
+  fs.appendFileSync(
+    `./migration-log-${now}.json`,
+    `\n${JSON.stringify(payload, null, 2)}`
+  );
+}
+
 let migrated = 0;
 let alreadyExists = 0;
 
@@ -76,10 +84,7 @@ async function processUserToClerk(userData: User) {
     migrated++;
   } catch (error) {
     if (error.status === 422) {
-      fs.appendFileSync(
-        "./migration-log.json",
-        JSON.stringify({ userId: userData.userId, ...error }, null, 2)
-      );
+      appendLog({ userId: userData.userId, ...error });
       alreadyExists++;
       return;
     }
@@ -94,10 +99,7 @@ async function processUserToClerk(userData: User) {
       return processUserToClerk(userData);
     }
 
-    fs.appendFileSync(
-      "./migration-log.json",
-      JSON.stringify({ userId: userData.userId, ...error }, null, 2)
-    );
+    appendLog({ userId: userData.userId, ...error });
   }
 }
 
