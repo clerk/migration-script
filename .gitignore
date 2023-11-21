@@ -3,3 +3,6 @@ node_modules
 users.json
 migration-log.json
 bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
