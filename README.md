@@ -116,3 +116,22 @@ You could continue to generate unique ids for the database as done previously, a
 
 You could add a column in your user table inside of your database called `ClerkId`. Use that column to store the userId from Clerk directly into your database.
 
+## Script Configuration
+
+
+### Batching
+To match Clerk's API rate limits, the script has certain measures in place that can be configured.
+The script will attempt to migrate a batch of 10 users concurrently, then cooldown before migrating the next 10. The batch size can be configured with the `BATCH` environment variable.
+```
+// .env
+BATCH=10
+```
+
+### Cooldown
+If an entire batch was migrated without hitting the rate limits, the script will wait for 2 seconds, configurable by the `DELAY` environment variable.
+If the rate limit was hit, the script will wait 5 seconds before retrying, configurable by the `RATE_LIMIT_DELAY` environment variable.
+```
+// .env
+DELAY=2000
+RATE_LIMIT_DELAY=5000
+```

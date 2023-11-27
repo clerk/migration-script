@@ -6,19 +6,22 @@ import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
 import Listr from "listr";
 
-const SECRET_KEY = process.env.CLERK_SECRET_KEY;
+const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const DELAY = Number(process.env.DELAY ?? 2_000);
 const RATE_LIMIT_DELAY = Number(process.env.RATE_LIMIT_DELAY ?? 5_000);
-const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
+const IMPORT_TO_DEV_INSTANCE = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
 const BATCH = Number(process.env.BATCH ?? 10);
 
-if (!SECRET_KEY) {
+if (!CLERK_SECRET_KEY) {
   throw new Error(
     "CLERK_SECRET_KEY is required. Please copy .env.example to .env and add your key."
   );
 }
 
-if (SECRET_KEY.split("_")[1] !== "live" && IMPORT_TO_DEV === "false") {
+if (
+  CLERK_SECRET_KEY.split("_")[1] !== "live" &&
+  IMPORT_TO_DEV_INSTANCE === "false"
+) {
   throw new Error(
     "The Clerk Secret Key provided is for a development instance. Development instances are limited to 500 users and do not share their userbase with production instances. If you want to import users to your development instance, please set 'IMPORT_TO_DEV_INSTANCE' in your .env to 'true'."
   );
