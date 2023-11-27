@@ -4,11 +4,13 @@ config();
 import * as fs from "fs";
 import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
-import ora, { Ora } from "ora";
+import Listr from "listr";
 
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const DELAY = Number(process.env.DELAY ?? 1_000);
+const DELAY = Number(process.env.DELAY ?? 2_000);
+const RATE_LIMIT_DELAY = Number(process.env.RATE_LIMIT_DELAY ?? 5_000);
 const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
+const BATCH = Number(process.env.BATCH ?? 10);
 
 if (!SECRET_KEY) {
   throw new Error(
@@ -42,7 +44,7 @@ const userSchema = z.object({
     .optional(),
 });
 
-type User = z.infer<typeof userSchema>;
+export interface User extends z.infer<typeof userSchema> {}
 
 const createUser = (userData: User) =>
   userData.password
@@ -70,36 +72,24 @@ function appendLog(payload: any) {
   );
 }
 
-let migrated = 0;
-let alreadyExists = 0;
-
-async function processUserToClerk(userData: User) {
+export async function processUserToClerk(userData: User) {
   try {
     const parsedUserData = userSchema.safeParse(userData);
     if (!parsedUserData.success) {
-      throw parsedUserData.error;
+      return { error: parsedUserData.error, type: "validation" } as const;
     }
-    await createUser(parsedUserData.data);
 
-    migrated++;
+    return { data: await createUser(parsedUserData.data) } as const;
   } catch (error) {
     if (error.status === 422) {
-      appendLog({ userId: userData.userId, ...error });
-      alreadyExists++;
-      return;
+      return { error, type: "already_exists" } as const;
     }
 
-    // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
     if (error.status === 429) {
-      console.log(`Waiting for rate limit to reset`);
-      await cooldown();
-
-      console.log("Retrying");
-      // conditional recursion
-      return processUserToClerk(userData);
+      return { error, type: "rate_limit" } as const;
     }
 
-    appendLog({ userId: userData.userId, ...error });
+    return { error, type: "unknown" } as const;
   }
 }
 
@@ -107,24 +97,66 @@ async function cooldown() {
   await new Promise((r) => setTimeout(r, DELAY));
 }
 
-let spinner: Ora;
-
 async function main() {
-  const parsedUserData = JSON.parse(fs.readFileSync("users.json", "utf-8"));
+  const parsedUserData: User[] = JSON.parse(
+    fs.readFileSync("users.json", "utf-8")
+  );
 
-  console.log(`Clerk User Migration Utility`);
-  spinner = ora(`Migrating users...`).start();
+  const queue = [...parsedUserData];
 
-  for (const userData of parsedUserData) {
-    await cooldown();
-    await processUserToClerk(userData);
+  while (queue.length > 0) {
+    const batchedQueue = queue.splice(0, BATCH);
+    let rateLimited = false;
+
+    const migrations = new Listr(
+      batchedQueue.map((user) => ({
+        title: `Migrating user ${user.userId}`,
+        task: async (_, task) => {
+          const result = await processUserToClerk(user);
+
+          if (result.error) {
+            if (result.type === "rate_limit") {
+              task.skip(`Rate limit exceeded, will be retried later`);
+              queue.push(user);
+              rateLimited = true;
+              return;
+            }
+
+            appendLog({ userId: user.userId, ...result.error });
+            task.skip(`Failed to migrate user ${user.userId}`);
+            return;
+          }
+
+          if (result.data) {
+            task.title = `Migrated user ${user.userId}`;
+          }
+
+          return;
+        },
+      })),
+      { concurrent: true }
+    );
+
+    await migrations.run();
+
+    if (rateLimited) {
+      await new Listr([
+        {
+          title: `Rate Limited - cooldown for ${
+            RATE_LIMIT_DELAY / 1000
+          } seconds...`,
+          task: async () => new Promise((r) => setTimeout(r, RATE_LIMIT_DELAY)),
+        },
+      ]).run();
+    } else if (queue.length) {
+      await new Listr([
+        {
+          title: `Cooldown for ${DELAY / 1000} seconds...`,
+          task: cooldown,
+        },
+      ]).run();
+    }
   }
-
-  return;
 }
 
-main().then(() => {
-  spinner?.stop();
-  console.log(`${migrated} users migrated`);
-  console.log(`${alreadyExists} users failed to upload`);
-});
+main();

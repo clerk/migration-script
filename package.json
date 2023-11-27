@@ -13,7 +13,10 @@
     "@clerk/clerk-sdk-node": "^4.12.21",
     "bun": "^1.0.12",
     "dotenv": "^16.3.1",
-    "ora": "^7.0.1",
+    "listr": "^0.14.3",
     "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/listr": "^0.14.9"
   }
 }
