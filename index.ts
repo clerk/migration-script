@@ -7,8 +7,8 @@ import clerkClient from "@clerk/clerk-sdk-node";
 import ora, { Ora } from "ora";
 
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const DELAY = Number(process.env.DELAY ?? 1_000);
-const RETRY_DELAY = Number(process.env.RETRY_DELAY ?? 10_000);
+const DELAY = parseInt(process.env.DELAY ?? `1_000`);
+const RETRY_DELAY = parseInt(process.env.RETRY_DELAY ?? `10_000`);
 const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
 
 if (!SECRET_KEY) {
