@@ -81,8 +81,8 @@ The script can be configured through the following environment variables:
 | Variable | Description | Default |
 | -------- | ----------- | ------- |
 | `CLERK_SECRET_KEY` | Your Clerk secret key | `undefined` |
-| `DELAY` | Delay between requests to respect rate limits (ms) | `1_000` |
-| `RETRY_DELAY` | Delay when the rate limit is hit (ms) | `10_000` |
+| `DELAY_MS` | Delay between requests to respect rate limits | `1000` |
+| `RETRY_DELAY_MS` | Delay when the rate limit is hit | `10000` |
 | `OFFSET` | Offset to start migration (number of users to skip) | `0` |
 
 ## Handling the Foreign Key constraint
