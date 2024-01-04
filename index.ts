@@ -10,6 +10,7 @@ const SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const DELAY = parseInt(process.env.DELAY ?? `1_000`);
 const RETRY_DELAY = parseInt(process.env.RETRY_DELAY ?? `10_000`);
 const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
+const OFFSET = parseInt(process.env.OFFSET ?? `0`);
 
 if (!SECRET_KEY) {
   throw new Error(
@@ -120,11 +121,15 @@ async function main() {
   console.log(`Clerk User Migration Utility`);
   console.log(`Fetching users.json...`);
 
-  const parsedUserData = JSON.parse(fs.readFileSync("users.json", "utf-8"));
+  const parsedUserData: any[] = JSON.parse(
+    fs.readFileSync("users.json", "utf-8")
+  );
+  const offsetUsers = parsedUserData.slice(OFFSET);
+  console.log(
+    `users.json found and parsed, attempting migration with an offset of ${OFFSET}`
+  );
 
-  console.log(`users.json found and parsed, attempting migration...`);
-
-  for (const userData of parsedUserData) {
+  for (const userData of offsetUsers) {
     const spinner = ora(`Cooldown`).start();
     await cooldown();
     spinner.stop();
