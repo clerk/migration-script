@@ -119,10 +119,13 @@ async function rateLimitCooldown() {
 
 async function main() {
   console.log(`Clerk User Migration Utility`);
-  console.log(`Fetching users.json...`);
+
+  const inputFileName = process.argv[2] ?? "users.json";
+
+  console.log(`Fetching users from ${inputFileName}`);
 
   const parsedUserData: any[] = JSON.parse(
-    fs.readFileSync("users.json", "utf-8")
+    fs.readFileSync(inputFileName, "utf-8")
   );
   const offsetUsers = parsedUserData.slice(OFFSET);
   console.log(
