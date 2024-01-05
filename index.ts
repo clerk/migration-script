@@ -75,8 +75,8 @@ function appendLog(payload: any) {
 let migrated = 0;
 let alreadyExists = 0;
 
-async function processUserToClerk(userData: User) {
-  const spinner = ora(`Migrating user ${userData.userId}`).start();
+async function processUserToClerk(userData: User, spinner: Ora) {
+  const txt = spinner.text;
   try {
     const parsedUserData = userSchema.safeParse(userData);
     if (!parsedUserData.success) {
@@ -85,27 +85,22 @@ async function processUserToClerk(userData: User) {
     await createUser(parsedUserData.data);
 
     migrated++;
-    spinner.succeed(`Migrated user ${userData.userId}`);
   } catch (error) {
     if (error.status === 422) {
       appendLog({ userId: userData.userId, ...error });
       alreadyExists++;
-      spinner.warn(`User ${userData.userId} already exists`);
       return;
     }
 
     // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
     if (error.status === 429) {
-      spinner.warn(`Rate limit reached`);
-      const cooldownSpinner = ora(`Cooldown`).start();
+      spinner.text = `${txt} - rate limit reached, waiting for ${RETRY_DELAY} ms`;
       await rateLimitCooldown();
-      cooldownSpinner.stop();
-      // conditional recursion
-      return processUserToClerk(userData);
+      spinner.text = txt;
+      return processUserToClerk(userData, spinner);
     }
 
     appendLog({ userId: userData.userId, ...error });
-    spinner.fail(`Failed to migrate user ${userData.userId}`);
   }
 }
 
@@ -132,14 +127,18 @@ async function main() {
     `users.json found and parsed, attempting migration with an offset of ${OFFSET}`
   );
 
-  for (const userData of offsetUsers) {
-    const spinner = ora(`Cooldown`).start();
-    await cooldown();
-    spinner.stop();
+  let i = 0;
+  const spinner = ora(`Migrating users`).start();
 
-    await processUserToClerk(userData);
+  for (const userData of offsetUsers) {
+    spinner.text = `Migrating user ${i}/${offsetUsers.length}, cooldown`;
+    await cooldown();
+    i++;
+    spinner.text = `Migrating user ${i}/${offsetUsers.length}`;
+    await processUserToClerk(userData, spinner);
   }
 
+  spinner.succeed(`Migration complete`);
   return;
 }
 
