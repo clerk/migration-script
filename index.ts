@@ -7,8 +7,10 @@ import clerkClient from "@clerk/clerk-sdk-node";
 import ora, { Ora } from "ora";
 
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const DELAY = Number(process.env.DELAY ?? 1_000);
+const DELAY = parseInt(process.env.DELAY_MS ?? `1_000`);
+const RETRY_DELAY = parseInt(process.env.RETRY_DELAY_MS ?? `10_000`);
 const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
+const OFFSET = parseInt(process.env.OFFSET ?? `0`);
 
 if (!SECRET_KEY) {
   throw new Error(
@@ -73,7 +75,8 @@ function appendLog(payload: any) {
 let migrated = 0;
 let alreadyExists = 0;
 
-async function processUserToClerk(userData: User) {
+async function processUserToClerk(userData: User, spinner: Ora) {
+  const txt = spinner.text;
   try {
     const parsedUserData = userSchema.safeParse(userData);
     if (!parsedUserData.success) {
@@ -91,12 +94,10 @@ async function processUserToClerk(userData: User) {
 
     // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
     if (error.status === 429) {
-      console.log(`Waiting for rate limit to reset`);
-      await cooldown();
-
-      console.log("Retrying");
-      // conditional recursion
-      return processUserToClerk(userData);
+      spinner.text = `${txt} - rate limit reached, waiting for ${RETRY_DELAY} ms`;
+      await rateLimitCooldown();
+      spinner.text = txt;
+      return processUserToClerk(userData, spinner);
     }
 
     appendLog({ userId: userData.userId, ...error });
@@ -107,24 +108,41 @@ async function cooldown() {
   await new Promise((r) => setTimeout(r, DELAY));
 }
 
-let spinner: Ora;
+async function rateLimitCooldown() {
+  await new Promise((r) => setTimeout(r, RETRY_DELAY));
+}
 
 async function main() {
-  const parsedUserData = JSON.parse(fs.readFileSync("users.json", "utf-8"));
-
   console.log(`Clerk User Migration Utility`);
-  spinner = ora(`Migrating users...`).start();
 
-  for (const userData of parsedUserData) {
+  const inputFileName = process.argv[2] ?? "users.json";
+
+  console.log(`Fetching users from ${inputFileName}`);
+
+  const parsedUserData: any[] = JSON.parse(
+    fs.readFileSync(inputFileName, "utf-8")
+  );
+  const offsetUsers = parsedUserData.slice(OFFSET);
+  console.log(
+    `users.json found and parsed, attempting migration with an offset of ${OFFSET}`
+  );
+
+  let i = 0;
+  const spinner = ora(`Migrating users`).start();
+
+  for (const userData of offsetUsers) {
+    spinner.text = `Migrating user ${i}/${offsetUsers.length}, cooldown`;
     await cooldown();
-    await processUserToClerk(userData);
+    i++;
+    spinner.text = `Migrating user ${i}/${offsetUsers.length}`;
+    await processUserToClerk(userData, spinner);
   }
 
+  spinner.succeed(`Migration complete`);
   return;
 }
 
 main().then(() => {
-  spinner?.stop();
   console.log(`${migrated} users migrated`);
   console.log(`${alreadyExists} users failed to upload`);
 });
