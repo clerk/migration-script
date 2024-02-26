@@ -41,7 +41,7 @@ const userSchema = z.object({
       "pbkdf2_sha1",
       "scrypt_firebase",
     ])
-    .optional(),
+    .default('bcrypt'),
 });
 
 type User = z.infer<typeof userSchema>;
