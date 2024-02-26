@@ -25,8 +25,8 @@ if (SECRET_KEY.split("_")[1] !== "live" && IMPORT_TO_DEV === "false") {
 }
 
 const userSchema = z.object({
-  userId: z.string(),
-  email: z.string().email(),
+  id: z.string(),
+  encrypted_email: z.string().email(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   password: z.string().optional(),
@@ -49,20 +49,20 @@ type User = z.infer<typeof userSchema>;
 const createUser = (userData: User) =>
   userData.password
     ? clerkClient.users.createUser({
-        externalId: userData.userId,
-        emailAddress: [userData.email],
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        passwordDigest: userData.password,
-        passwordHasher: userData.passwordHasher,
-      })
+      externalId: userData.id,
+      emailAddress: [userData.encrypted_email],
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      passwordDigest: userData.password,
+      passwordHasher: userData.passwordHasher,
+    })
     : clerkClient.users.createUser({
-        externalId: userData.userId,
-        emailAddress: [userData.email],
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        skipPasswordRequirement: true,
-      });
+      externalId: userData.id,
+      emailAddress: [userData.encrypted_email],
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      skipPasswordRequirement: true,
+    });
 
 const now = new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
 function appendLog(payload: any) {
@@ -87,7 +87,7 @@ async function processUserToClerk(userData: User, spinner: Ora) {
     migrated++;
   } catch (error) {
     if (error.status === 422) {
-      appendLog({ userId: userData.userId, ...error });
+      appendLog({ userId: userData.id, ...error });
       alreadyExists++;
       return;
     }
@@ -100,7 +100,7 @@ async function processUserToClerk(userData: User, spinner: Ora) {
       return processUserToClerk(userData, spinner);
     }
 
-    appendLog({ userId: userData.userId, ...error });
+    appendLog({ userId: userData.id, ...error });
   }
 }
 
