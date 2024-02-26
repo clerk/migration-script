@@ -26,10 +26,10 @@ if (SECRET_KEY.split("_")[1] !== "live" && IMPORT_TO_DEV === "false") {
 
 const userSchema = z.object({
   id: z.string(),
-  encrypted_email: z.string().email(),
+  email: z.string().email(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  password: z.string().optional(),
+  encrypted_password: z.string().optional(),
   passwordHasher: z
     .enum([
       "argon2i",
@@ -47,18 +47,18 @@ const userSchema = z.object({
 type User = z.infer<typeof userSchema>;
 
 const createUser = (userData: User) =>
-  userData.password
+  userData.encrypted_password
     ? clerkClient.users.createUser({
       externalId: userData.id,
-      emailAddress: [userData.encrypted_email],
+      emailAddress: [userData.email],
       firstName: userData.firstName,
       lastName: userData.lastName,
-      passwordDigest: userData.password,
+      passwordDigest: userData.encrypted_password,
       passwordHasher: userData.passwordHasher,
     })
     : clerkClient.users.createUser({
       externalId: userData.id,
-      emailAddress: [userData.encrypted_email],
+      emailAddress: [userData.email],
       firstName: userData.firstName,
       lastName: userData.lastName,
       skipPasswordRequirement: true,
