@@ -1,0 +1,36 @@
+[
+{
+    "instance_id": "00000000-0000-0000-0000-000000000000",
+    "id": "2971a33d-5b7c-4c11-b8fe-61b7f185f211",
+    "aud": "authenticated",
+    "role": "authenticated",
+    "email": "janedoe@clerk.dev",
+    "encrypted_password": "$2a$10$hg4EXrEHfcqoKhNtENsYCO5anpp/C9WCUAAAtXEqpZkdCcxL/hcGG",
+    "email_confirmed_at": "2024-02-22 14:34:45.631743+00",
+    "raw_app_meta_data": "{\"provider\":\"email\",\"providers\":[\"email\"]}",
+    "raw_user_meta_data": "{}",
+    "created_at": "2024-02-22 14:34:45.626071+00",
+    "updated_at": "2024-02-22 14:34:45.631967+00",
+    "confirmed_at": "2024-02-22 14:34:45.631743+00",
+    "email_change_confirm_status": "0",
+    "is_sso_user": "false",
+    "deleted_at": ""
+  },
+{
+    "instance_id": "00000000-0000-0000-0000-000000000000",
+    "id": "2971a33d-5b7c-4c11-b8fe-61b7f185f234",
+    "aud": "authenticated",
+    "role": "authenticated",
+    "email": "johndoe@clerk.dev",
+    "encrypted_password": "$2a$10$hg4EXrEHfcqoKhNtENsYCO5anpp/C9WCUAAAtXEqpZkdCcxL/hcGG",
+    "email_confirmed_at": "2024-01-01 14:34:45.631743+00",
+    "raw_app_meta_data": "{\"provider\":\"email\",\"providers\":[\"email\"]}",
+    "raw_user_meta_data": "{}",
+    "created_at": "2024-02-22 14:34:45.626071+00",
+    "updated_at": "2024-02-22 14:34:45.631967+00",
+    "confirmed_at": "2024-02-22 14:34:45.631743+00",
+    "email_change_confirm_status": "0",
+    "is_sso_user": "false",
+    "deleted_at": ""
+  }
+]
