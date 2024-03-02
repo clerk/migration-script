@@ -1,6 +1,7 @@
 
 import * as p from '@clack/prompts'
 import color from 'picocolors'
+import { checkIfFileExists } from './functions'
 
 
 export const runCLI = async () => {
@@ -22,12 +23,17 @@ export const runCLI = async () => {
       file: () =>
         p.text({
           message: 'Specify the file to use for importing your users',
-          initialValue: './users.json',
-          placeholder: './users.json'
+          initialValue: 'users.json',
+          placeholder: 'users.json',
+          validate: (value) => {
+            if (!checkIfFileExists(value)) {
+              return "That file does not exist. Please try again"
+            }
+          }
         }),
       instance: () =>
         p.select({
-          message: 'Are you importing your users into a production instance? You should only import into a development instance for testing',
+          message: 'Are you importing your users into a production instance? You should only import into a development instance for testing. Development instances are limited to 500 users and do not share their userbase with production instances. ',
           initialValue: 'prod',
           maxItems: 1,
           options: [

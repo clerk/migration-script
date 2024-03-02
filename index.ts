@@ -11,6 +11,7 @@ import ora, { Ora } from "ora";
 import { authjsUserSchema } from "./src/validators";
 import { env } from "./src/env";
 import { runCLI } from "./src/cli";
+import { checkFileType } from "./src/functions";
 
 if (env.CLERK_SECRET_KEY.split("_")[1] !== "live" && env.IMPORT_TO_DEV === false) {
   throw new Error(
@@ -90,15 +91,7 @@ async function rateLimitCooldown() {
 }
 
 async function mainOld() {
-  console.log(`Clerk User Migration Utility`);
 
-  const inputFileName = process.argv[2] ?? "users.json";
-
-  console.log(`Fetching users from ${inputFileName}`);
-
-  const parsedUserData: any[] = JSON.parse(
-    fs.readFileSync(inputFileName, "utf-8")
-  );
   const offsetUsers = parsedUserData.slice(env.DELAY);
   console.log(
     `users.json found and parsed, attempting migration with an offset of ${env.OFFSET}`
@@ -126,6 +119,8 @@ async function main() {
   const args = await runCLI()
 
   console.log('PARAMS', args)
+
+  checkFileType(args.file)
 }
 
 
