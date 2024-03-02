@@ -1,7 +1,7 @@
 
 import * as p from '@clack/prompts'
 import color from 'picocolors'
-import { checkIfFileExists } from './functions'
+import { checkIfFileExists, getFileType } from './functions'
 
 
 export const runCLI = async () => {
@@ -28,6 +28,9 @@ export const runCLI = async () => {
           validate: (value) => {
             if (!checkIfFileExists(value)) {
               return "That file does not exist. Please try again"
+            }
+            if (getFileType(value) !== 'text/csv' && getFileType(value) !== 'application/json') {
+              return 'Please supply a valid JSON or CSV file'
             }
           }
         }),

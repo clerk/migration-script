@@ -11,7 +11,7 @@ import ora, { Ora } from "ora";
 import { authjsUserSchema } from "./src/validators";
 import { env } from "./src/env";
 import { runCLI } from "./src/cli";
-import { checkFileType } from "./src/functions";
+import { checkFileType, loadUsersFromFile } from "./src/functions";
 
 if (env.CLERK_SECRET_KEY.split("_")[1] !== "live" && env.IMPORT_TO_DEV === false) {
   throw new Error(
@@ -120,7 +120,9 @@ async function main() {
 
   console.log('PARAMS', args)
 
-  checkFileType(args.file)
+  const users = await loadUsersFromFile(args.file)
+
+  console.log(users)
 }
 
 
