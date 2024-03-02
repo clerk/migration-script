@@ -9,9 +9,9 @@ import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
 import ora, { Ora } from "ora";
 import { authjsUserSchema } from "./src/validators";
-import { env } from "./src/env";
+import { env } from "./src/envs-constants";
 import { runCLI } from "./src/cli";
-import { checkFileType, loadUsersFromFile } from "./src/functions";
+import { loadUsersFromFile } from "./src/functions";
 
 if (env.CLERK_SECRET_KEY.split("_")[1] !== "live" && env.IMPORT_TO_DEV === false) {
   throw new Error(
@@ -122,7 +122,7 @@ async function main() {
 
   const users = await loadUsersFromFile(args.file)
 
-  console.log(users)
+
 }
 
 

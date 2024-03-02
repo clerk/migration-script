@@ -1,24 +1,23 @@
 
 import * as p from '@clack/prompts'
 import color from 'picocolors'
-import { checkIfFileExists, getFileType } from './functions'
+import { checkIfFileExists, createValidatorOptions, getFileType } from './functions'
+import { VALIDATORS } from './envs-constants'
 
 
 export const runCLI = async () => {
   p.intro(`${color.bgCyan(color.black('Clerk User Migration Utility'))}`)
+
+  const options = createValidatorOptions()
 
   const args = await p.group(
     {
       source: () =>
         p.select({
           message: 'What platform are you migrating your users from?',
-          initialValue: 'authjs',
+          initialValue: options[0].value,
           maxItems: 1,
-          options: [
-            { value: 'authjs', label: 'Auth.js (Next-Auth)' },
-            { value: 'auth0', label: 'Auth0' },
-            { value: 'supabase', label: 'Supabase' }
-          ]
+          options: options
         }),
       file: () =>
         p.text({
@@ -36,7 +35,7 @@ export const runCLI = async () => {
         }),
       instance: () =>
         p.select({
-          message: 'Are you importing your users into a production instance? You should only import into a development instance for testing. Development instances are limited to 500 users and do not share their userbase with production instances. ',
+          message: 'Are you importing your users into a production instance? Development instances are for testing and limited t0 500 users.',
           initialValue: 'prod',
           maxItems: 1,
           options: [
@@ -72,3 +71,4 @@ export const runCLI = async () => {
   return args
 
 }
+

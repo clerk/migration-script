@@ -2,6 +2,8 @@ import mime from 'mime-types'
 import fs from 'fs';
 import path from 'path'
 import csvParser from 'csv-parser';
+import { VALIDATORS } from './envs-constants';
+// import { Option } from '@clack/prompts';
 
 
 const createFilePath = (file: string) => {
@@ -50,6 +52,21 @@ export const loadUsersFromFile = async (file: string) => {
 
     return users
   }
-
 }
 
+// emulate what Clack expects for an option in a Select / MultiSelect
+export type OptionType = {
+  value: string;
+  label: string | undefined;
+  hint?: string | undefined;
+}
+
+export const createValidatorOptions = () => {
+  const options: OptionType[] = [];
+
+  for (const validator of VALIDATORS) {
+    options.push({ "value": validator.value, "label": validator.label })
+  }
+
+  return options
+}

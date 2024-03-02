@@ -28,3 +28,11 @@ if (!parsed.success) {
 
 export const env = parsed.data
 
+
+export const VALIDATORS = [
+  { value: 'authjs', label: 'Auth.js (Next-Auth)', schema: 'authjsUseerSchema' },
+  { value: 'auth0', label: 'Auth0', schema: 'authoUserSchema' },
+  { value: 'supabase', label: 'Supabase', schema: 'supabaseUserSchems' }
+
+]
+
