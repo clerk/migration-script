@@ -6,7 +6,7 @@ export const options = {
   schema: 'authjsUserSchema'
 }
 
-export const authjsUserSchema = z.object({
+const authjsUserSchema = z.object({
   userId: z.string(),
   email: z.string().email(),
   firstName: z.string().optional(),
@@ -26,5 +26,5 @@ export const authjsUserSchema = z.object({
     .optional(),
 });
 
-
+export default authjsUserSchema
 

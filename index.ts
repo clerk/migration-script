@@ -5,13 +5,14 @@ import color from 'picocolors'
 import { setTimeout } from 'node:timers/promises';
 
 import * as fs from "fs";
+import * as path from 'path';
 import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
 import ora, { Ora } from "ora";
-import { authjsUserSchema } from "./src/validators/authjsValidator";
+import authjsUserSchema from "./src/validators/authjsValidator";
 import { env } from "./src/envs-constants";
 import { runCLI } from "./src/cli";
-import { loadUsersFromFile } from "./src/functions";
+import { loadUsersFromFile, loadValidator } from "./src/functions";
 
 if (env.CLERK_SECRET_KEY.split("_")[1] !== "live" && env.IMPORT_TO_DEV === false) {
   throw new Error(
@@ -92,10 +93,6 @@ async function rateLimitCooldown() {
 
 async function mainOld() {
 
-  const offsetUsers = parsedUserData.slice(env.DELAY);
-  console.log(
-    `users.json found and parsed, attempting migration with an offset of ${env.OFFSET}`
-  );
 
   let i = 0;
   const spinner = ora(`Migrating users`).start();
@@ -120,9 +117,20 @@ async function main() {
 
   console.log('PARAMS', args)
 
-  const users = await loadUsersFromFile(args.file)
+  const userSchema = loadValidator(args.source)
+  type User = z.infer<typeof userSchema>;
 
 
+  console.log(userSchema)
+
+
+  const users = await loadUsersFromFile(args.file, args.source)
+
+
+  const usersToImport = users.slice(parseInt(args.offset) > env.OFFSET ? parseInt(args.offset) : env.OFFSET);
+
+
+  importUsers(usersToImport, userSchema, args)
 
 }
 

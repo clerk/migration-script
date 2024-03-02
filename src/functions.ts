@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path'
 import csvParser from 'csv-parser';
 import { VALIDATORS } from './envs-constants';
+import * as z from "zod";
 // import { Option } from '@clack/prompts';
 
 
@@ -28,8 +29,11 @@ export const getFileType = (file: string) => {
 }
 
 
-export const loadUsersFromFile = async (file: string) => {
+export const loadUsersFromFile = async (file: string, source: string) => {
 
+  // const userSchema = loadValidator(source)
+  // type User = z.infer<typeof userSchema>;
+  //
   const type = getFileType(createFilePath(file))
   if (type === "text/csv") {
 
@@ -46,7 +50,7 @@ export const loadUsersFromFile = async (file: string) => {
   } else {
 
     // TODO: Can we deal with the any here?
-    const users: any[] = JSON.parse(
+    const users = JSON.parse(
       fs.readFileSync(createFilePath(file), "utf-8")
     );
 
@@ -71,10 +75,21 @@ export const createValidatorOptions = () => {
   return options
 }
 
-// export const selectSchema (selectedSchema:string) => {
-//
-// }
-//
+export const loadValidator = (validatorName: string) => {
+  const validatorsDirectory = path.join(__dirname, 'validators');
+
+  const filePath = path.join(validatorsDirectory, `${validatorName}Validator`);
+  const validatorModule = require(filePath);
+
+  const userSchema = validatorModule.default;
+
+  console.log(`Imported:`, userSchema);
+
+  return userSchema
+
+
+}
+
 
 
 export const authjsFirstSort = (a: any, b: any): number => {

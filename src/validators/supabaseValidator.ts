@@ -6,7 +6,7 @@ export const options = {
   schema: 'supabaseUserSchema'
 }
 
-export const supabaseUserSchema = z.object({
+const supabaseUserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   firstName: z.string().optional(),
@@ -26,3 +26,4 @@ export const supabaseUserSchema = z.object({
     .default('bcrypt'),
 });
 
+export default supabaseUserSchema
