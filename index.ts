@@ -8,7 +8,7 @@ import * as fs from "fs";
 import * as z from "zod";
 import clerkClient from "@clerk/clerk-sdk-node";
 import ora, { Ora } from "ora";
-import { authjsUserSchema } from "./src/validators";
+import { authjsUserSchema } from "./src/validators/authjsValidator";
 import { env } from "./src/envs-constants";
 import { runCLI } from "./src/cli";
 import { loadUsersFromFile } from "./src/functions";
@@ -121,6 +121,7 @@ async function main() {
   console.log('PARAMS', args)
 
   const users = await loadUsersFromFile(args.file)
+
 
 
 }

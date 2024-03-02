@@ -1,14 +1,14 @@
 
 import * as p from '@clack/prompts'
 import color from 'picocolors'
-import { checkIfFileExists, createValidatorOptions, getFileType } from './functions'
+import { authjsFirstSort, checkIfFileExists, createValidatorOptions, getFileType } from './functions'
 import { VALIDATORS } from './envs-constants'
 
 
 export const runCLI = async () => {
   p.intro(`${color.bgCyan(color.black('Clerk User Migration Utility'))}`)
 
-  const options = createValidatorOptions()
+  const options = createValidatorOptions().sort(authjsFirstSort)
 
   const args = await p.group(
     {

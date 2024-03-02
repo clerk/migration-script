@@ -70,3 +70,18 @@ export const createValidatorOptions = () => {
 
   return options
 }
+
+// export const selectSchema (selectedSchema:string) => {
+//
+// }
+//
+
+
+export const authjsFirstSort = (a: any, b: any): number => {
+  // If 'authjs' is present in either 'a' or 'b', prioritize it
+  if (a.value === 'authjs') return -1;
+  if (b.value === 'authjs') return 1;
+
+  // Otherwise, maintain the original order
+  return 0;
+};
