@@ -1,10 +1,7 @@
 
 import { TypeOf, z } from 'zod'
-import * as fs from 'fs';
-import * as path from 'path';
 import { config } from "dotenv";
 config();
-// require('dotenv').config()
 
 // TODO: Revisit if we need this. Left to easily implement
 export const withDevDefault = <T extends z.ZodTypeAny>(

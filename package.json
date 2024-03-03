@@ -8,6 +8,9 @@
   "license": "ISC",
   "scripts": {
     "start": "bun index.ts"
+    "start": "bun index.ts",
+    "lint": "eslint . --config .eslintrc.js",
+    "lint:fix": "eslint . --fix --config .eslintrc.js"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
@@ -22,6 +25,9 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/mime-types": "^2.1.4"
+    "@types/mime-types": "^2.1.4",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
+    "eslint": "^8.57.0",
   }
 }
