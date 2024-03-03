@@ -62,7 +62,7 @@ export const runCLI = async () => {
   )
 
   if (args.begin) {
-    console.log('Migration started')
+    // console.log('Migration started')
   }
 
   return args

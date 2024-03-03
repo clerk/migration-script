@@ -1,5 +1,3 @@
-import * as z from "zod";
-
 export const options = {
   key: 'supabase',
   label: 'Supabase',

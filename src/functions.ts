@@ -4,6 +4,9 @@ import path from 'path'
 import mime from 'mime-types'
 import csvParser from 'csv-parser';
 import * as z from "zod";
+import * as p from '@clack/prompts'
+
+const s = p.spinner()
 
 type Handler = {
   key: string;
@@ -113,6 +116,9 @@ export const transformKeys = (data: Record<string, any>, keys: any): Record<stri
 
 export const loadUsersFromFile = async (file: string, key: string) => {
 
+  s.start()
+  s.message('Loading users and perparing to migrate')
+
   const type = getFileType(createImportFilePath(file))
 
   const transformerKeys = handlers.find(obj => obj.key === key);
@@ -157,10 +163,9 @@ export const loadUsersFromFile = async (file: string, key: string) => {
         // The data is not valid, handle errors
         console.error('Validation Errors:', validationResult.error.errors);
       }
-
     }
-
-    // console.log('transformed data', JSON.stringify(transformedData))
+    s.stop('Users Loaded')
+    p.log.step('Users loaded')
     return transformedData
   }
 }
