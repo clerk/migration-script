@@ -153,9 +153,7 @@ export const loadUsersFromFile = async (file: string, key: string): Promise<User
     );
 
     const transformedData: User[] = [];
-
     for (const user of users) {
-      // = transformKeys(users)
       const transformedUser = transformKeys(user, transformerKeys)
 
       const validationResult = userSchema.safeParse(transformedUser)
@@ -167,8 +165,7 @@ export const loadUsersFromFile = async (file: string, key: string): Promise<User
         transformedData.push(validatedData)
       } else {
         // The data is not valid, handle errors
-        console.error('Validation Errors:', validationResult.error.errors);
-        logger("error", validationResult.error.errors, dateTime)
+        logger("validator", validationResult.error.errors, dateTime)
       }
     }
     s.stop('Users Loaded')
