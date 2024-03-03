@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 config();
+
 import * as p from '@clack/prompts';
 import color from 'picocolors'
 import { setTimeout } from 'node:timers/promises';
@@ -7,12 +8,13 @@ import { setTimeout } from 'node:timers/promises';
 import * as fs from "fs";
 import * as path from 'path';
 import * as z from "zod";
-import clerkClient from "@clerk/clerk-sdk-node";
+import clerkClient, { User } from "@clerk/clerk-sdk-node";
 import ora, { Ora } from "ora";
-import authjsUserSchema from "./src/validators/authjsValidator";
 import { env } from "./src/envs-constants";
 import { runCLI } from "./src/cli";
 import { loadUsersFromFile, loadValidator } from "./src/functions";
+import { importUsers } from "./src/import-users";
+import authjsUserSchema from "./src/transformers/authjsTransfomer";
 
 if (env.CLERK_SECRET_KEY.split("_")[1] !== "live" && env.IMPORT_TO_DEV === false) {
   throw new Error(
@@ -21,116 +23,85 @@ if (env.CLERK_SECRET_KEY.split("_")[1] !== "live" && env.IMPORT_TO_DEV === false
 }
 
 
+//
+// type User = z.infer<typeof authjsUserSchema>;
+//
+// const createUser = (userData: User) =>
+//   userData.password
+//     ? clerkClient.users.createUser({
+//       externalId: userData.userId,
+//       emailAddress: [userData.email],
+//       firstName: userData.firstName,
+//       lastName: userData.lastName,
+//       passwordDigest: userData.password,
+//       passwordHasher: userData.passwordHasher,
+//     })
+//     : clerkClient.users.createUser({
+//       externalId: userData.userId,
+//       emailAddress: [userData.email],
+//       firstName: userData.firstName,
+//       lastName: userData.lastName,
+//       skipPasswordRequirement: true,
+//     });
+//
+// const now = new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
+// function appendLog(payload: any) {
+//   fs.appendFileSync(
+//     `./migration-log-${now}.json`,
+//     `\n${JSON.stringify(payload, null, 2)}`
+//   );
+// }
+// let migrated = 0;
+// let alreadyExists = 0;
+//
+// async function processUserToClerk(userData: User, spinner: Ora) {
+//   const txt = spinner.text;
+//   try {
+//     const parsedUserData = authjsUserSchema.safeParse(userData);
+//     if (!parsedUserData.success) {
+//       throw parsedUserData.error;
+//     }
+//     console.log('USER', parsedUserData.data)
+//     // await createUser(parsedUserData.data);
+//
+//     migrated++;
+//   } catch (error) {
+//     if (error.status === 422) {
+//       appendLog({ userId: userData.userId, ...error });
+//       alreadyExists++;
+//       return;
+//     }
+//
+//     // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
+//     if (error.status === 429) {
+//       spinner.text = `${txt} - rate limit reached, waiting for ${env.RETRY_DELAY_MS} ms`;
+//       await rateLimitCooldown();
+//       spinner.text = txt;
+//       return processUserToClerk(userData, spinner);
+//     }
+//
+//     appendLog({ userId: userData.userId, ...error });
+//   }
+// }
 
-type User = z.infer<typeof authjsUserSchema>;
-
-const createUser = (userData: User) =>
-  userData.password
-    ? clerkClient.users.createUser({
-      externalId: userData.userId,
-      emailAddress: [userData.email],
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      passwordDigest: userData.password,
-      passwordHasher: userData.passwordHasher,
-    })
-    : clerkClient.users.createUser({
-      externalId: userData.userId,
-      emailAddress: [userData.email],
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      skipPasswordRequirement: true,
-    });
-
-const now = new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
-function appendLog(payload: any) {
-  fs.appendFileSync(
-    `./migration-log-${now}.json`,
-    `\n${JSON.stringify(payload, null, 2)}`
-  );
-}
-
-let migrated = 0;
-let alreadyExists = 0;
-
-async function processUserToClerk(userData: User, spinner: Ora) {
-  const txt = spinner.text;
-  try {
-    const parsedUserData = authjsUserSchema.safeParse(userData);
-    if (!parsedUserData.success) {
-      throw parsedUserData.error;
-    }
-    console.log('USER', parsedUserData.data)
-    // await createUser(parsedUserData.data);
-
-    migrated++;
-  } catch (error) {
-    if (error.status === 422) {
-      appendLog({ userId: userData.userId, ...error });
-      alreadyExists++;
-      return;
-    }
-
-    // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
-    if (error.status === 429) {
-      spinner.text = `${txt} - rate limit reached, waiting for ${env.RETRY_DELAY_MS} ms`;
-      await rateLimitCooldown();
-      spinner.text = txt;
-      return processUserToClerk(userData, spinner);
-    }
-
-    appendLog({ userId: userData.userId, ...error });
-  }
-}
-
-async function cooldown() {
-  await new Promise((r) => setTimeout(r, env.DELAY));
-}
-
-async function rateLimitCooldown() {
-  await new Promise((r) => setTimeout(r, env.RETRY_DELAY_MS));
-}
-
-async function mainOld() {
-
-
-  let i = 0;
-  const spinner = ora(`Migrating users`).start();
-
-  for (const userData of offsetUsers) {
-    spinner.text = `Migrating user ${i}/${offsetUsers.length}, cooldown`;
-    await cooldown();
-    i++;
-    spinner.text = `Migrating user ${i}/${offsetUsers.length}`;
-    await processUserToClerk(userData, spinner);
-  }
-
-  spinner.succeed(`Migration complete`);
-  return;
-}
 
 
 
 async function main() {
+  console.log('TEST')
 
   const args = await runCLI()
 
-  console.log('PARAMS', args)
+  // const userSchema = loadValidator(args.source)
+  // type User = z.infer<typeof userSchema>;
 
-  const userSchema = loadValidator(args.source)
-  type User = z.infer<typeof userSchema>;
+  const users = await loadUsersFromFile(args.file, args.key)
 
-
-  console.log(userSchema)
-
-
-  const users = await loadUsersFromFile(args.file, args.source)
-
+  console.log(users)
 
   const usersToImport = users.slice(parseInt(args.offset) > env.OFFSET ? parseInt(args.offset) : env.OFFSET);
 
-
-  importUsers(usersToImport, userSchema, args)
+  importUsers(usersToImport, args)
 
 }
 

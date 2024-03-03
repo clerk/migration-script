@@ -1,102 +1,179 @@
-import mime from 'mime-types'
+
 import fs from 'fs';
 import path from 'path'
+import mime from 'mime-types'
 import csvParser from 'csv-parser';
-import { VALIDATORS } from './envs-constants';
 import * as z from "zod";
-// import { Option } from '@clack/prompts';
+
+type Handler = {
+  key: string;
+  label: string;
+  transformer: any;
+};
+
+// Dynamically read what handlers are present and generate array for use in script
+const handlersDirectory = path.join(__dirname, '/handlers');
+export const handlers: Handler[] = [];
+const files = fs.readdirSync(handlersDirectory);
+
+files.forEach((file) => {
+  if (file.endsWith('.ts')) {
+    const filePath = path.join(handlersDirectory, file);
+    const handlerModule = require(filePath);
+
+    if (handlerModule.options && handlerModule.options.key && handlerModule.options.transformer) {
+      handlers.push({
+        key: handlerModule.options.key,
+        label: handlerModule.options.label || '',
+        transformer: handlerModule.options.transformer
+      });
+    }
+  }
+});
+
+// default schema -- incoming data will be transformed to this format
+export const userSchema = z.object({
+  userId: z.string(),
+  email: z.string().email(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  password: z.string().optional(),
+  passwordHasher: z
+    .enum([
+      "argon2i",
+      "argon2id",
+      "bcrypt",
+      "md5",
+      "pbkdf2_sha256",
+      "pbkdf2_sha256_django",
+      "pbkdf2_sha1",
+      "scrypt_firebase",
+    ])
+    .optional(),
+});
+
+export type User = z.infer<typeof userSchema>;
 
 
-const createFilePath = (file: string) => {
+// utility function to create file path
+const createImportFilePath = (file: string) => {
   return path.join(__dirname, '..', file)
 }
 
-export const checkIfFileExists = (file: string) => {
-  console.log('file', file)
 
-  if (fs.existsSync(createFilePath(file))) {
-    console.log('exist')
+// make sure the file exists. CLI will error if it doesn't
+export const checkIfFileExists = (file: string) => {
+  if (fs.existsSync(createImportFilePath(file))) {
     return true
   }
   else {
-    console.log('does not exist')
     return false
   }
 }
 
+// get the file type so we can verify if this is a JSON or CSV
 export const getFileType = (file: string) => {
-  return mime.lookup(createFilePath(file))
+  return mime.lookup(createImportFilePath(file))
 }
 
-
-export const loadUsersFromFile = async (file: string, source: string) => {
-
-  // const userSchema = loadValidator(source)
-  // type User = z.infer<typeof userSchema>;
-  //
-  const type = getFileType(createFilePath(file))
-  if (type === "text/csv") {
-
-    const users = [{}];
-    return new Promise((resolve, reject) => {
-      fs.createReadStream(createFilePath(file))
-        .pipe(csvParser())
-        .on('data', (data) => users.push(data))
-        .on('error', (err) => reject(err))
-        .on('end', () => {
-          resolve(users)
-        })
-    });
-  } else {
-
-    // TODO: Can we deal with the any here?
-    const users = JSON.parse(
-      fs.readFileSync(createFilePath(file), "utf-8")
-    );
-
-    return users
-  }
-}
-
-// emulate what Clack expects for an option in a Select / MultiSelect
+// emulate what Clack CLI expects for an option in a Select / MultiSelect
 export type OptionType = {
   value: string;
   label: string | undefined;
   hint?: string | undefined;
 }
 
-export const createValidatorOptions = () => {
+// handlers is an array created from the files in /src/validators
+// generate an array of options for use in the CLI
+export const createHandlerOptions = () => {
   const options: OptionType[] = [];
 
-  for (const validator of VALIDATORS) {
-    options.push({ "value": validator.value, "label": validator.label })
+  for (const handler of handlers) {
+    options.push({ "value": handler.key, "label": handler.label })
   }
-
   return options
 }
 
-export const loadValidator = (validatorName: string) => {
-  const validatorsDirectory = path.join(__dirname, 'validators');
+// transform incoming data datas to match default schema
+// TODO : Remove any -- not sure how to handle this
+export const transformKeys = (data: Record<string, any>, keys: any): Record<string, any> => {
 
-  const filePath = path.join(validatorsDirectory, `${validatorName}Validator`);
-  const validatorModule = require(filePath);
+  const transformedData: Record<string, any> = {};
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      let transformedKey = key;
+      if (keys.transformer[key]) transformedKey = keys.transformer[key]
 
-  const userSchema = validatorModule.default;
+      transformedData[transformedKey] = data[key];
+    }
+  }
+  return transformedData;
+};
 
-  console.log(`Imported:`, userSchema);
 
-  return userSchema
+export const loadUsersFromFile = async (file: string, key: string) => {
 
+  const type = getFileType(createImportFilePath(file))
 
+  const transformerKeys = handlers.find(obj => obj.key === key);
+
+  // convert a CSV to JSON and return array
+  if (type === "text/csv") {
+
+    const users: User[] = [];
+    return new Promise((resolve, reject) => {
+      fs.createReadStream(createImportFilePath(file))
+        .pipe(csvParser())
+        .on('data', (data) => {
+          users.push(data)
+        })
+        .on('error', (err) => reject(err))
+        .on('end', () => {
+          resolve(users)
+        })
+    });
+
+    // if the file is already JSON, just read and parse and return the result    
+  } else {
+
+    const users: User[] = JSON.parse(
+      fs.readFileSync(createImportFilePath(file), "utf-8")
+    );
+
+    const transformedData: User[] = [];
+
+    for (const user of users) {
+      // = transformKeys(users)
+      const transformedUser = transformKeys(user, transformerKeys)
+
+      const validationResult = userSchema.safeParse(transformedUser)
+
+      // Check if validation was successful
+      if (validationResult.success) {
+        // The data is valid according to the original schema
+        const validatedData = validationResult.data;
+        transformedData.push(validatedData)
+      } else {
+        // The data is not valid, handle errors
+        console.error('Validation Errors:', validationResult.error.errors);
+      }
+
+    }
+
+    // console.log('transformed data', JSON.stringify(transformedData))
+    return transformedData
+  }
 }
 
 
-
+// Make sure that Auth.js is the first option for the script
 export const authjsFirstSort = (a: any, b: any): number => {
   // If 'authjs' is present in either 'a' or 'b', prioritize it
-  if (a.value === 'authjs') return -1;
-  if (b.value === 'authjs') return 1;
+  if (a.key === 'authjs') return -1;
+  if (b.key === 'authjs') return 1;
 
   // Otherwise, maintain the original order
   return 0;
 };
+
+

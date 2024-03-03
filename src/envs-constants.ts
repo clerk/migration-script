@@ -33,31 +33,3 @@ if (!parsed.success) {
 export const env = parsed.data
 
 
-// Dynamically read what validators are present and generate array for use in script
-
-type Validator = {
-  value: string;
-  label: string;
-  schema: string;
-};
-
-// 
-const validatorsDirectory = path.join(__dirname, '/validators');
-export const VALIDATORS: Validator[] = [];
-const files = fs.readdirSync(validatorsDirectory);
-
-
-files.forEach((file) => {
-  if (file.endsWith('.ts')) {
-    const filePath = path.join(validatorsDirectory, file);
-    const validatorModule = require(filePath); // Use `require` for dynamic imports in Node.js
-
-    if (validatorModule.options && validatorModule.options.value && validatorModule.options.schema) {
-      VALIDATORS.push({
-        value: validatorModule.options.value,
-        label: validatorModule.options.label || '',
-        schema: validatorModule.options.schema,
-      });
-    }
-  }
-});

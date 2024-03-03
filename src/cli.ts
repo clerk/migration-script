@@ -1,16 +1,16 @@
 
 import * as p from '@clack/prompts'
 import color from 'picocolors'
-import { authjsFirstSort, checkIfFileExists, createValidatorOptions, getFileType } from './functions'
-
+import { checkIfFileExists, createHandlerOptions, getFileType } from './functions'
+//
 export const runCLI = async () => {
   p.intro(`${color.bgCyan(color.black('Clerk User Migration Utility'))}`)
 
-  const options = createValidatorOptions().sort(authjsFirstSort)
+  const options = createHandlerOptions()
 
   const args = await p.group(
     {
-      source: () =>
+      key: () =>
         p.select({
           message: 'What platform are you migrating your users from?',
           initialValue: options[0].value,
@@ -64,7 +64,6 @@ export const runCLI = async () => {
   if (args.begin) {
     console.log('Migration started')
   }
-
 
   return args
 
