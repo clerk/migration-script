@@ -1,7 +1,8 @@
 import clerkClient from "@clerk/clerk-sdk-node";
 import { env } from "./envs-constants";
-import { User, userSchema } from "./functions";
+import { User, getDateTimeStamp, userSchema } from "./functions";
 import * as p from '@clack/prompts'
+import { logger } from "./logger";
 
 type CliArgs = {
   key: string,
@@ -39,7 +40,7 @@ const createUser = (userData: User) =>
 
 
 
-async function processUserToClerk(userData: User, total: number) {
+async function processUserToClerk(userData: User, total: number, dateTime: string) {
   try {
     const parsedUserData = userSchema.safeParse(userData);
     if (!parsedUserData.success) {
@@ -50,18 +51,18 @@ async function processUserToClerk(userData: User, total: number) {
     s.message(`Migrating users: [${migrated}/${total}]`)
 
   } catch (error) {
-    if (error.status === 422) {
-      // appendLog({ userId: userData.userId, ...error });
-      return;
-    }
-
     // Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
     if (error.status === 429) {
       await cooldown(env.RETRY_DELAY_MS)
-      return processUserToClerk(userData, total);
+      return processUserToClerk(userData, total, dateTime);
     }
 
-    // appendLog({ userId: userData.userId, ...error });
+    if (error.status === 422) {
+      logger({ userId: userData.userId, ...error }, "error", dateTime);
+      return;
+    }
+
+    logger({ userId: userData.userId, ...error }, "info", dateTime);
   }
 }
 
@@ -69,13 +70,14 @@ async function processUserToClerk(userData: User, total: number) {
 
 export const importUsers = async (users: User[], args: CliArgs) => {
 
+  const dateTime = getDateTimeStamp()
   s.start()
   const total = users.length
   s.message(`Migration users: [0/${total}]`)
 
   for (const user of users) {
     await cooldown(env.DELAY)
-    await processUserToClerk(user, total)
+    await processUserToClerk(user, total, dateTime)
   }
   s.stop()
   p.outro('Migration complete')

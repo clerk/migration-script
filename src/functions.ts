@@ -5,6 +5,7 @@ import mime from 'mime-types'
 import csvParser from 'csv-parser';
 import * as z from "zod";
 import * as p from '@clack/prompts'
+import { logger } from './logger';
 
 const s = p.spinner()
 
@@ -79,6 +80,11 @@ export const getFileType = (file: string) => {
   return mime.lookup(createImportFilePath(file))
 }
 
+export const getDateTimeStamp = () => {
+  return new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
+
+}
+
 // emulate what Clack CLI expects for an option in a Select / MultiSelect
 export type OptionType = {
   value: string;
@@ -114,8 +120,8 @@ export const transformKeys = (data: Record<string, any>, keys: any): Record<stri
 };
 
 
-export const loadUsersFromFile = async (file: string, key: string) => {
-
+export const loadUsersFromFile = async (file: string, key: string): Promise<User[]> => {
+  const dateTime = getDateTimeStamp()
   s.start()
   s.message('Loading users and perparing to migrate')
 
@@ -162,6 +168,7 @@ export const loadUsersFromFile = async (file: string, key: string) => {
       } else {
         // The data is not valid, handle errors
         console.error('Validation Errors:', validationResult.error.errors);
+        logger("error", validationResult.error.errors, dateTime)
       }
     }
     s.stop('Users Loaded')
