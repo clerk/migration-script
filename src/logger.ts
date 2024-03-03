@@ -1,62 +1,107 @@
+import { ClerkAPIError } from '@clerk/types';
 import fs from 'fs';
 import path from 'path'
 
+type ErrorPayload = {
+  userId: string;
+  status: string;
+  errors: ClerkAPIError[]
+}
+
+type ValidationErrorPayload = {
+  error: string;
+  path: (string | number)[];
+  row: number;
+}
+
+type ErrorLog = {
+  type: string;
+  userId: string;
+  status: string;
+  error: string | undefined
+}
+
 const confirmOrCreateFolder = (path: string) => {
-  console.log('creating', path)
   try {
     if (!fs.existsSync(path)) {
       fs.mkdirSync(path);
     }
   } catch (err) {
-    console.error(err);
+    console.error(
+      '❌ Error creating directory for logs:',
+      err
+    );
   }
-
 }
 
-export const logger = (type: "info" | "error" | "validator", payload: any, dateTime: string): void => {
 
+const logger = (payload: any, dateTime: string) => {
+  const logPath = path.join(__dirname, '..', 'logs')
+  confirmOrCreateFolder(logPath)
+
+  try {
+    if (!fs.existsSync(`${logPath}/${dateTime}.json`)) {
+      ; fs.writeFileSync(
+        `${logPath}/${dateTime}.json`,
+        JSON.stringify(payload, null, 2)
+      );
+    } else {
+      const log = JSON.parse(
+        fs.readFileSync(`${logPath}/${dateTime}.json`, "utf-8")
+      );
+      log.push(payload)
+
+      fs.writeFileSync(
+        `${logPath}/${dateTime}.json`,
+        JSON.stringify(log, null, 2)
+      );
+    }
+
+  } catch (err) {
+    console.error(
+      '❌ Error creating directory for logs:',
+      err
+    );
+  }
+}
+
+
+export const infoLogger = (message: string, dateTime: string): void => {
   confirmOrCreateFolder(path.join(__dirname, '..', 'logs'))
-  console.log(type)
+  logger([{ message: message }], dateTime)
+}
 
+export const errorLogger = (payload: ErrorPayload, dateTime: string): void => {
 
-  if (type === "info") {
-    const infoPath = path.join(__dirname, '..', 'logs', 'info')
+  const errorsPath = path.join(__dirname, '..', 'logs')
+  confirmOrCreateFolder(errorsPath)
 
-    confirmOrCreateFolder(infoPath)
+  const errors: ErrorLog[] = []
+  for (const err of payload.errors) {
 
-    fs.appendFileSync(
-      `${infoPath}/${dateTime}.json`,
-      `\n${JSON.stringify(payload, null, 2)}`
-    );
+    const errorToLog = {
+      type: "User Creation Error",
+      userId: payload.userId,
+      status: payload.status,
+      error: err.longMessage
+
+    }
+    errors.push((errorToLog))
   }
+  logger(errors, dateTime)
+}
 
-  if (type === "error") {
-    const errorsPath = path.join(__dirname, '..', 'logs', 'errors')
-    console.log(errorsPath)
-    confirmOrCreateFolder(errorsPath)
+export const validationLogger = (payload: ValidationErrorPayload, dateTime: string): void => {
 
+  const errorsPath = path.join(__dirname, '..', 'logs')
+  confirmOrCreateFolder(errorsPath)
 
-
-    fs.appendFileSync(
-      `${errorsPath}/${dateTime}.json`,
-      `\n${JSON.stringify(payload, null, 2)}`
-    );
-
-  }
-
-
-  if (type === "validator") {
-    const validatorPath = path.join(__dirname, '..', 'logs', 'validator')
-    confirmOrCreateFolder(validatorPath)
-
-
-
-    fs.appendFileSync(
-      `${validatorPath}/${dateTime}.json`,
-      `\n${JSON.stringify(payload, null, 2)}`
-    );
+  const error = {
+    type: "Validation Error",
+    row: payload.row,
+    error: payload.error,
+    path: payload.path
 
   }
-
-
+  logger(error, dateTime)
 }

@@ -19,7 +19,7 @@ async function main() {
 
   const usersToImport = users.slice(parseInt(args.offset) > env.OFFSET ? parseInt(args.offset) : env.OFFSET);
 
-  importUsers(usersToImport, args)
+  importUsers(usersToImport)
 
 }
 

@@ -2,8 +2,9 @@ import clerkClient from "@clerk/clerk-sdk-node";
 import { env } from "./envs-constants";
 import { User, getDateTimeStamp, userSchema } from "./functions";
 import * as p from '@clack/prompts'
-import { logger } from "./logger";
+import { errorLogger } from "./logger";
 
+// TODO: This is likely not needed anymore
 type CliArgs = {
   key: string,
   file: string,
@@ -56,19 +57,17 @@ async function processUserToClerk(userData: User, total: number, dateTime: strin
       await cooldown(env.RETRY_DELAY_MS)
       return processUserToClerk(userData, total, dateTime);
     }
+    if (error.status === "form_identifier_exists") {
+      console.log('ERROR', error)
 
-    if (error.status === 422) {
-      logger({ userId: userData.userId, ...error }, "error", dateTime);
-      return;
     }
-
-    logger({ userId: userData.userId, ...error }, "info", dateTime);
+    errorLogger({ userId: userData.userId, status: error.status, errors: error.errors }, dateTime);
   }
 }
 
 
 
-export const importUsers = async (users: User[], args: CliArgs) => {
+export const importUsers = async (users: User[]) => {
 
   const dateTime = getDateTimeStamp()
   s.start()

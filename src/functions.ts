@@ -5,7 +5,7 @@ import mime from 'mime-types'
 import csvParser from 'csv-parser';
 import * as z from "zod";
 import * as p from '@clack/prompts'
-import { logger } from './logger';
+import { validationLogger } from './logger';
 
 const s = p.spinner()
 
@@ -108,16 +108,20 @@ export const createHandlerOptions = () => {
 export const transformKeys = (data: Record<string, any>, keys: any): Record<string, any> => {
 
   const transformedData: Record<string, any> = {};
-  for (const key in data) {
-    if (data.hasOwnProperty(key)) {
-      let transformedKey = key;
-      if (keys.transformer[key]) transformedKey = keys.transformer[key]
+  // for (const key in data) {
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== "" && value !== '"{}"') {
+      if (data.hasOwnProperty(key)) {
+        let transformedKey = key;
+        if (keys.transformer[key]) transformedKey = keys.transformer[key]
 
-      transformedData[transformedKey] = data[key];
+        transformedData[transformedKey] = data[key];
+      }
     }
   }
   return transformedData;
 };
+
 
 
 export const loadUsersFromFile = async (file: string, key: string): Promise<User[]> => {
@@ -153,8 +157,9 @@ export const loadUsersFromFile = async (file: string, key: string): Promise<User
     );
 
     const transformedData: User[] = [];
-    for (const user of users) {
-      const transformedUser = transformKeys(user, transformerKeys)
+    // for (const user of users) {
+    for (let i = 0; i < users.length; i++) {
+      const transformedUser = transformKeys(users[i], transformerKeys)
 
       const validationResult = userSchema.safeParse(transformedUser)
 
@@ -165,11 +170,12 @@ export const loadUsersFromFile = async (file: string, key: string): Promise<User
         transformedData.push(validatedData)
       } else {
         // The data is not valid, handle errors
-        logger("validator", validationResult.error.errors, dateTime)
+        validationLogger({ error: `${validationResult.error.errors[0].code} for required field.`, path: validationResult.error.errors[0].path, row: i }, dateTime)
       }
+      i++
     }
     s.stop('Users Loaded')
-    p.log.step('Users loaded')
+    // p.log.step('Users loaded')
     return transformedData
   }
 }

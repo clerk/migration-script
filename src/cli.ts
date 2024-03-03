@@ -1,8 +1,9 @@
 
 import * as p from '@clack/prompts'
 import color from 'picocolors'
-import { checkIfFileExists, createHandlerOptions, getFileType } from './functions'
-//
+import { checkIfFileExists, createHandlerOptions, getDateTimeStamp, getFileType } from './functions'
+import { infoLogger } from './logger'
+
 export const runCLI = async () => {
   p.intro(`${color.bgCyan(color.black('Clerk User Migration Utility'))}`)
 
@@ -62,7 +63,7 @@ export const runCLI = async () => {
   )
 
   if (args.begin) {
-    // console.log('Migration started')
+    infoLogger("Migration process started", getDateTimeStamp())
   }
 
   return args
