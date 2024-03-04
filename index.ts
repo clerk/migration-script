@@ -3,7 +3,7 @@ config();
 
 import { env } from "./src/envs-constants";
 import { runCLI } from "./src/cli";
-import { loadUsersFromFile } from "./src/functions";
+import { TransformKeys, loadUsersFromFile } from "./src/functions";
 import { importUsers } from "./src/import-users";
 
 if (
@@ -18,7 +18,8 @@ if (
 async function main() {
   const args = await runCLI();
 
-  const users = await loadUsersFromFile(args.file, args.key);
+  // we can use Zod to validate the args.keys to ensure it is TransformKeys type
+  const users = await loadUsersFromFile(args.file, args.key as TransformKeys);
 
   const usersToImport = users.slice(
     parseInt(args.offset) > env.OFFSET ? parseInt(args.offset) : env.OFFSET,

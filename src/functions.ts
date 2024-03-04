@@ -32,6 +32,19 @@ export const userSchema = z.object({
 
 export type User = z.infer<typeof userSchema>;
 
+// emulate what Clack CLI expects for an option in a Select / MultiSelect
+export type OptionType = {
+  value: string;
+  label: string | undefined;
+  hint?: string | undefined;
+};
+
+// create a union of all keys in the transformer object
+export type TransformKeys = keyof (typeof handlers)[number];
+
+// create a union of all transformer objects in handlers array
+type KeyHandlerMap = (typeof handlers)[number];
+
 // utility function to create file path
 const createImportFilePath = (file: string) => {
   return path.join(__dirname, "..", file);
@@ -55,16 +68,6 @@ export const getDateTimeStamp = () => {
   return new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
 };
 
-// emulate what Clack CLI expects for an option in a Select / MultiSelect
-export type OptionType = {
-  value: string;
-  label: string | undefined;
-  hint?: string | undefined;
-};
-
-// create a union of all transformer objects in handlers array
-type KeyHandlerMap = (typeof handlers)[number];
-
 // transform incoming data datas to match default schema
 export function transformKeys<T extends KeyHandlerMap>(
   data: Record<string, unknown>,
@@ -86,7 +89,7 @@ export function transformKeys<T extends KeyHandlerMap>(
 
 const transformUsers = (
   users: User[],
-  key: keyof (typeof handlers)[number],
+  key: TransformKeys,
   dateTime: string,
 ) => {
   // This applies to smaller numbers. Pass in 10, get 5 back.
@@ -147,7 +150,7 @@ const addDefaultFields = (users: User[], key: string) => {
 
 export const loadUsersFromFile = async (
   file: string,
-  key: keyof (typeof handlers)[number],
+  key: TransformKeys,
 ): Promise<User[]> => {
   const dateTime = getDateTimeStamp();
   s.start();
