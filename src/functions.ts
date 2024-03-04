@@ -39,12 +39,11 @@ export type OptionType = {
   label: string | undefined;
   hint?: string | undefined;
 };
-
-// create a union of all keys in the transformer object
-export type TransformKeys = keyof (typeof handlers)[number];
+// create union of string literals from handlers transformer object keys
+export type HandlerMapKeys = (typeof handlers)[number]["key"];
 
 // create a union of all transformer objects in handlers array
-type KeyHandlerMap = (typeof handlers)[number];
+type HandlerMapUnion = (typeof handlers)[number];
 
 // utility function to create file path
 const createImportFilePath = (file: string) => {
@@ -70,7 +69,7 @@ export const getDateTimeStamp = () => {
 };
 
 // transform incoming data datas to match default schema
-export function transformKeys<T extends KeyHandlerMap>(
+export function transformKeys<T extends HandlerMapUnion>(
   data: Record<string, unknown>,
   keys: T,
 ): Record<string, unknown> {
@@ -90,7 +89,7 @@ export function transformKeys<T extends KeyHandlerMap>(
 
 const transformUsers = (
   users: User[],
-  key: TransformKeys,
+  key: HandlerMapKeys,
   dateTime: string,
 ) => {
   // This applies to smaller numbers. Pass in 10, get 5 back.
@@ -151,7 +150,7 @@ const addDefaultFields = (users: User[], key: string) => {
 
 export const loadUsersFromFile = async (
   file: string,
-  key: TransformKeys,
+  key: HandlerMapKeys,
 ): Promise<User[]> => {
   const dateTime = getDateTimeStamp();
   s.start();
