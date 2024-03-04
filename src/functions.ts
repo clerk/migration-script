@@ -123,23 +123,27 @@ const transformUsers = (
 
 const addDefaultFields = (users: User[], key: string) => {
   if (handlers.find((obj) => obj.key === key)?.defaults) {
-    const defaultFields = handlers.find((obj) => obj.key === key)?.defaults;
+    const defaultFields =
+      handlers.find((obj) => obj.key === key)?.defaults ?? {};
 
-    console.log('defaults', defaultFields)
+    console.log("defaults", defaultFields);
 
-    const updatedUsers: User[] = []
+    const updatedUsers: User[] = [];
 
     for (const user of users) {
-      const updated = { ...user, ...defaultFields }
-      updatedUsers.push(updated)
+      const updated = {
+        ...user,
+        ...defaultFields,
+      };
+      updatedUsers.push(updated);
     }
 
-    console.log('USERS', JSON.stringify(updatedUsers, null, 2))
-    return updatedUsers
+    console.log("USERS", JSON.stringify(updatedUsers, null, 2));
+    return updatedUsers;
   } else {
-    return users
+    return users;
   }
-}
+};
 
 export const loadUsersFromFile = async (
   file: string,
@@ -162,8 +166,12 @@ export const loadUsersFromFile = async (
         })
         .on("error", (err) => reject(err))
         .on("end", () => {
-          const usersWithDefaultFields = addDefaultFields(users, key)
-          const transformedData: User[] = transformUsers(usersWithDefaultFields, key, dateTime);
+          const usersWithDefaultFields = addDefaultFields(users, key);
+          const transformedData: User[] = transformUsers(
+            usersWithDefaultFields,
+            key,
+            dateTime,
+          );
           resolve(transformedData);
         });
     });
@@ -173,8 +181,12 @@ export const loadUsersFromFile = async (
     const users: User[] = JSON.parse(
       fs.readFileSync(createImportFilePath(file), "utf-8"),
     );
-    const usersWithDefaultFields = addDefaultFields(users, key)
-    const transformedData: User[] = transformUsers(usersWithDefaultFields, key, dateTime);
+    const usersWithDefaultFields = addDefaultFields(users, key);
+    const transformedData: User[] = transformUsers(
+      usersWithDefaultFields,
+      key,
+      dateTime,
+    );
     s.stop("Users Loaded");
     // p.log.step('Users loaded')
     return transformedData;

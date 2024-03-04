@@ -21,6 +21,8 @@ type ErrorLog = {
   error: string | undefined;
 };
 
+type LogType = ErrorLog[] | ValidationErrorPayload | { message: string }[];
+
 const confirmOrCreateFolder = (path: string) => {
   try {
     if (!fs.existsSync(path)) {
@@ -31,7 +33,7 @@ const confirmOrCreateFolder = (path: string) => {
   }
 };
 
-const logger = (payload: any, dateTime: string) => {
+function logger<T extends LogType>(payload: T, dateTime: string) {
   const logPath = path.join(__dirname, "..", "logs");
   confirmOrCreateFolder(logPath);
 
@@ -56,14 +58,14 @@ const logger = (payload: any, dateTime: string) => {
   } catch (err) {
     console.error("❌ Error creating directory for logs:", err);
   }
-};
+}
 
-export const infoLogger = (message: string, dateTime: string): void => {
+export const infoLogger = (message: string, dateTime: string) => {
   confirmOrCreateFolder(path.join(__dirname, "..", "logs"));
   logger([{ message: message }], dateTime);
 };
 
-export const errorLogger = (payload: ErrorPayload, dateTime: string): void => {
+export const errorLogger = (payload: ErrorPayload, dateTime: string) => {
   const errorsPath = path.join(__dirname, "..", "logs");
   confirmOrCreateFolder(errorsPath);
 
@@ -83,7 +85,7 @@ export const errorLogger = (payload: ErrorPayload, dateTime: string): void => {
 export const validationLogger = (
   payload: ValidationErrorPayload,
   dateTime: string,
-): void => {
+) => {
   const errorsPath = path.join(__dirname, "..", "logs");
   confirmOrCreateFolder(errorsPath);
 
