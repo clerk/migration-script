@@ -62,17 +62,18 @@ export type OptionType = {
   hint?: string | undefined;
 };
 
+// create a union of all transformer objects in handlers array
+type KeyHandlerMap = (typeof handlers)[number];
+
 // transform incoming data datas to match default schema
-// TODO : Remove any -- not sure how to handle this
-export const transformKeys = (
+export function transformKeys<T extends KeyHandlerMap>(
   data: Record<string, unknown>,
-  keys: any,
-): Record<string, unknown> => {
-  const transformedData: Record<string, any> = {};
-  // for (const key in data) {
+  keys: T,
+): Record<string, unknown> {
+  const transformedData = {};
   for (const [key, value] of Object.entries(data)) {
     if (value !== "" && value !== '"{}"') {
-      if (data.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
         let transformedKey = key;
         if (keys.transformer[key]) transformedKey = keys.transformer[key];
 
@@ -81,14 +82,22 @@ export const transformKeys = (
     }
   }
   return transformedData;
-};
+}
 
-const transformUsers = (users: User[], key: string, dateTime: string) => {
-  const transformerKeys = handlers.find((obj) => obj.key === key);
-
+const transformUsers = (
+  users: User[],
+  key: keyof (typeof handlers)[number],
+  dateTime: string,
+) => {
   // This applies to smaller numbers. Pass in 10, get 5 back.
   const transformedData: User[] = [];
   for (let i = 0; i < users.length; i++) {
+    const transformerKeys = handlers.find((obj) => obj.key === key);
+
+    if (transformerKeys === undefined) {
+      throw new Error("No transformer found for the specified key");
+    }
+
     const transformedUser = transformKeys(users[i], transformerKeys);
 
     const validationResult = userSchema.safeParse(transformedUser);
@@ -134,7 +143,7 @@ const addDefaultFields = (users: User[], key: string) => {
 
 export const loadUsersFromFile = async (
   file: string,
-  key: string,
+  key: keyof (typeof handlers)[number],
 ): Promise<User[]> => {
   const dateTime = getDateTimeStamp();
   s.start();
@@ -170,15 +179,4 @@ export const loadUsersFromFile = async (
     // p.log.step('Users loaded')
     return transformedData;
   }
-};
-
-// Make sure that Auth.js is the first option for the script
-// TODO: Is this needed?
-export const authjsFirstSort = (a: any, b: any): number => {
-  // If 'authjs' is present in either 'a' or 'b', prioritize it
-  if (a.key === "authjs") return -1;
-  if (b.key === "authjs") return 1;
-
-  // Otherwise, maintain the original order
-  return 0;
 };
