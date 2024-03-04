@@ -1,6 +1,6 @@
 export const options = {
-  key: 'clerk',
-  label: 'Clerk',
+  key: "clerk",
+  label: "Clerk",
   transformer: {
     id: "userId",
     email_addresses: "email",
@@ -8,9 +8,6 @@ export const options = {
     last_name: "lastName",
     phone_number: "phoneNumber",
     password_digest: "passwordDigest",
-    password_hasher: "passwordHasher"
-  }
-}
-
-
-
+    password_hasher: "passwordHasher",
+  },
+};

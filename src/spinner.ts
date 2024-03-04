@@ -1,6 +1,6 @@
-import * as p from '@clack/prompts';
+import * as p from "@clack/prompts";
 
-p.intro('spinner start...');
+p.intro("spinner start...");
 
 const spin = p.spinner();
 const total = 10000;
@@ -18,5 +18,5 @@ new Promise((resolve) => {
   }, 100);
 }).then(() => {
   spin.stop(`Done`);
-  p.outro('spinner stop...');
+  p.outro("spinner stop...");
 });
