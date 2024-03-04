@@ -123,6 +123,42 @@ export const transformKeys = (
   return transformedData;
 };
 
+const transformUsers = (users: User[], key: string, dateTime: string) => {
+
+  const transformerKeys = handlers.find((obj) => obj.key === key);
+
+  // TODO: This block of code trims the users array from 2500 to 12500. 
+  // This applies to smaller numbers. Pass in 10, get 5 back.
+  const transformedData: User[] = [];
+  console.log('USERS BEFORE', users.length)
+  for (let i = 0; i < users.length; i++) {
+    const transformedUser = transformKeys(users[i], transformerKeys);
+
+    const validationResult = userSchema.safeParse(transformedUser);
+
+    // Check if validation was successful
+    if (validationResult.success) {
+      // The data is valid according to the original schema
+      const validatedData = validationResult.data;
+      transformedData.push(validatedData);
+    } else {
+      // The data is not valid, handle errors
+      validationLogger(
+        {
+          error: `${validationResult.error.errors[0].code} for required field.`,
+          path: validationResult.error.errors[0].path,
+          row: i,
+        },
+        dateTime,
+      );
+    }
+    i++;
+  }
+
+  console.log('USERS USERS', transformedData.length)
+  return transformedData
+}
+
 export const loadUsersFromFile = async (
   file: string,
   key: string,
@@ -133,7 +169,6 @@ export const loadUsersFromFile = async (
 
   const type = getFileType(createImportFilePath(file));
 
-  const transformerKeys = handlers.find((obj) => obj.key === key);
 
   // convert a CSV to JSON and return array
   if (type === "text/csv") {
@@ -146,7 +181,8 @@ export const loadUsersFromFile = async (
         })
         .on("error", (err) => reject(err))
         .on("end", () => {
-          resolve(users);
+          const transformedData: User[] = transformUsers(users, key, dateTime)
+          resolve(transformedData);
         });
     });
 
@@ -154,33 +190,11 @@ export const loadUsersFromFile = async (
   } else {
     const users: User[] = JSON.parse(
       fs.readFileSync(createImportFilePath(file), "utf-8"),
-    );
+    )
 
-    const transformedData: User[] = [];
-    // for (const user of users) {
-    for (let i = 0; i < users.length; i++) {
-      const transformedUser = transformKeys(users[i], transformerKeys);
+    const transformedData: User[] = transformUsers(users, key, dateTime)
 
-      const validationResult = userSchema.safeParse(transformedUser);
-
-      // Check if validation was successful
-      if (validationResult.success) {
-        // The data is valid according to the original schema
-        const validatedData = validationResult.data;
-        transformedData.push(validatedData);
-      } else {
-        // The data is not valid, handle errors
-        validationLogger(
-          {
-            error: `${validationResult.error.errors[0].code} for required field.`,
-            path: validationResult.error.errors[0].path,
-            row: i,
-          },
-          dateTime,
-        );
-      }
-      i++;
-    }
+    console.log('USERS USERS', transformedData.length)
     s.stop("Users Loaded");
     // p.log.step('Users loaded')
     return transformedData;
