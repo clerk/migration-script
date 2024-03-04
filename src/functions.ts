@@ -5,38 +5,9 @@ import csvParser from "csv-parser";
 import * as z from "zod";
 import * as p from "@clack/prompts";
 import { validationLogger } from "./logger";
+import { handlers } from "./handlers";
 
 const s = p.spinner();
-
-type Handler = {
-  key: string;
-  label: string;
-  transformer: any;
-};
-
-// Dynamically read what handlers are present and generate array for use in script
-const handlersDirectory = path.join(__dirname, "/handlers");
-export const handlers: Handler[] = [];
-const files = fs.readdirSync(handlersDirectory);
-
-files.forEach((file) => {
-  if (file.endsWith(".ts")) {
-    const filePath = path.join(handlersDirectory, file);
-    const handlerModule = require(filePath);
-
-    if (
-      handlerModule.options &&
-      handlerModule.options.key &&
-      handlerModule.options.transformer
-    ) {
-      handlers.push({
-        key: handlerModule.options.key,
-        label: handlerModule.options.label || "",
-        transformer: handlerModule.options.transformer,
-      });
-    }
-  }
-});
 
 // default schema -- incoming data will be transformed to this format
 export const userSchema = z.object({
@@ -89,17 +60,6 @@ export type OptionType = {
   value: string;
   label: string | undefined;
   hint?: string | undefined;
-};
-
-// handlers is an array created from the files in /src/validators
-// generate an array of options for use in the CLI
-export const createHandlerOptions = () => {
-  const options: OptionType[] = [];
-
-  for (const handler of handlers) {
-    options.push({ value: handler.key, label: handler.label });
-  }
-  return options;
 };
 
 // transform incoming data datas to match default schema

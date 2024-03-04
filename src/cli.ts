@@ -2,25 +2,25 @@ import * as p from "@clack/prompts";
 import color from "picocolors";
 import {
   checkIfFileExists,
-  createHandlerOptions,
   getDateTimeStamp,
   getFileType,
+
 } from "./functions";
 import { infoLogger } from "./logger";
+import { handlers } from "./handlers";
 
 export const runCLI = async () => {
   p.intro(`${color.bgCyan(color.black("Clerk User Migration Utility"))}`);
 
-  const options = createHandlerOptions();
 
   const args = await p.group(
     {
       key: () =>
         p.select({
           message: "What platform are you migrating your users from?",
-          initialValue: options[0].value,
+          initialValue: handlers[0].value,
           maxItems: 1,
-          options: options,
+          options: handlers,
         }),
       file: () =>
         p.text({
