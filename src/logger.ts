@@ -37,9 +37,10 @@ const logger = (payload: any, dateTime: string) => {
 
   try {
     if (!fs.existsSync(`${logPath}/${dateTime}.json`)) {
+      const log = [payload];
       fs.writeFileSync(
         `${logPath}/${dateTime}.json`,
-        JSON.stringify(payload, null, 2),
+        JSON.stringify(log, null, 2),
       );
     } else {
       const log = JSON.parse(

@@ -57,9 +57,9 @@ async function processUserToClerk(
       await cooldown(env.RETRY_DELAY_MS);
       return processUserToClerk(userData, total, dateTime);
     }
-    if (error.status === "form_identifier_exists") {
-      console.log("ERROR", error);
-    }
+    // if (error.status === "form_identifier_exists") {
+    //   console.log("ERROR", error);
+    // }
     errorLogger(
       { userId: userData.userId, status: error.status, errors: error.errors },
       dateTime,
@@ -74,8 +74,8 @@ export const importUsers = async (users: User[]) => {
   s.message(`Migration users: [0/${total}]`);
 
   for (const user of users) {
-    await cooldown(env.DELAY);
     await processUserToClerk(user, total, dateTime);
+    await cooldown(env.DELAY);
   }
   s.stop();
   p.outro("Migration complete");

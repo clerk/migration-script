@@ -65,9 +65,9 @@ export type OptionType = {
 // transform incoming data datas to match default schema
 // TODO : Remove any -- not sure how to handle this
 export const transformKeys = (
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   keys: any,
-): Record<string, any> => {
+): Record<string, unknown> => {
   const transformedData: Record<string, any> = {};
   // for (const key in data) {
   for (const [key, value] of Object.entries(data)) {
@@ -86,15 +86,12 @@ export const transformKeys = (
 const transformUsers = (users: User[], key: string, dateTime: string) => {
   const transformerKeys = handlers.find((obj) => obj.key === key);
 
-  // TODO: This block of code trims the users array from 2500 to 12500.
   // This applies to smaller numbers. Pass in 10, get 5 back.
   const transformedData: User[] = [];
-  console.log("USERS BEFORE", users.length);
   for (let i = 0; i < users.length; i++) {
     const transformedUser = transformKeys(users[i], transformerKeys);
 
     const validationResult = userSchema.safeParse(transformedUser);
-
     // Check if validation was successful
     if (validationResult.success) {
       // The data is valid according to the original schema
@@ -111,10 +108,7 @@ const transformUsers = (users: User[], key: string, dateTime: string) => {
         dateTime,
       );
     }
-    i++;
   }
-
-  console.log("USERS AFTER", transformedData.length);
   return transformedData;
 };
 
@@ -158,6 +152,7 @@ export const loadUsersFromFile = async (
 };
 
 // Make sure that Auth.js is the first option for the script
+// TODO: Is this needed?
 export const authjsFirstSort = (a: any, b: any): number => {
   // If 'authjs' is present in either 'a' or 'b', prioritize it
   if (a.key === "authjs") return -1;

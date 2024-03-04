@@ -1,7 +1,6 @@
 import * as p from "@clack/prompts";
 import color from "picocolors";
-import { checkIfFileExists, getDateTimeStamp, getFileType } from "./functions";
-import { infoLogger } from "./logger";
+import { checkIfFileExists, getFileType } from "./functions";
 import { handlers } from "./handlers";
 
 export const runCLI = async () => {
@@ -63,10 +62,6 @@ export const runCLI = async () => {
       },
     },
   );
-
-  if (args.begin) {
-    infoLogger("Migration process started", getDateTimeStamp());
-  }
 
   return args;
 };
