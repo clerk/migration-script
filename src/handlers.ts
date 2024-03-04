@@ -30,10 +30,15 @@ export const handlers = [
     label: "Supabase",
     transformer: {
       id: "userId",
-      email_addresses: "email",
+      email: "email",
       first_name: "firstName",
       last_name: "lastName",
+      encrypted_password: "password",
+      phone: "phone"
     },
+    defaults: {
+      passwordHasher: "bcrypt"
+    }
   },
   {
     key: "auth0",
