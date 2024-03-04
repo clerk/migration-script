@@ -10,8 +10,8 @@
     "start": "bun index.ts",
     "lint": "eslint . --config .eslintrc.js",
     "lint:fix": "eslint . --fix --config .eslintrc.js",
-    "prettier": "prettier . --write",
-    "prettier:test": "prettier ."
+    "format": "prettier . --write",
+    "format:test": "prettier ."
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",

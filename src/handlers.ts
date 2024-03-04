@@ -34,11 +34,11 @@ export const handlers = [
       first_name: "firstName",
       last_name: "lastName",
       encrypted_password: "password",
-      phone: "phone"
+      phone: "phone",
     },
     defaults: {
-      passwordHasher: "bcrypt"
-    }
+      passwordHasher: "bcrypt",
+    },
   },
   {
     key: "auth0",
@@ -46,9 +46,15 @@ export const handlers = [
     label: "Auth0",
     transformer: {
       id: "userId",
-      email_addresses: "email",
-      first_name: "firstName",
-      last_name: "lastName",
+      email: "email",
+      given_name: "firstName",
+      family_name: "lastName",
+      phone_number: "phone",
+      passwordHash: "password",
+      user_metadata: "publicMetadata",
+    },
+    defaults: {
+      passwordHasher: "bcrypt",
     },
   },
 ];

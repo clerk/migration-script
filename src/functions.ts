@@ -13,6 +13,7 @@ const s = p.spinner();
 export const userSchema = z.object({
   userId: z.string(),
   email: z.string().email(),
+  username: z.string().optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   password: z.string().optional(),
