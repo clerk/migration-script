@@ -35,12 +35,12 @@ export const runCLI = async () => {
       instance: () =>
         p.select({
           message:
-            "Are you importing your users into a production instance? Development instances are for testing and limited t0 500 users.",
+            "Are you importing your users into a production instance? Development instances are for testing and limited to 500 users.",
           initialValue: "prod",
           maxItems: 1,
           options: [
-            { value: "prod", label: "Prodction" },
-            { value: "dev", label: "Developetion" },
+            { value: "prod", label: "Production" },
+            { value: "dev", label: "Development" },
           ],
         }),
       offset: () =>
