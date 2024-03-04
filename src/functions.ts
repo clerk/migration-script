@@ -84,13 +84,12 @@ export const transformKeys = (
 };
 
 const transformUsers = (users: User[], key: string, dateTime: string) => {
-
   const transformerKeys = handlers.find((obj) => obj.key === key);
 
-  // TODO: This block of code trims the users array from 2500 to 12500. 
+  // TODO: This block of code trims the users array from 2500 to 12500.
   // This applies to smaller numbers. Pass in 10, get 5 back.
   const transformedData: User[] = [];
-  console.log('USERS BEFORE', users.length)
+  console.log("USERS BEFORE", users.length);
   for (let i = 0; i < users.length; i++) {
     const transformedUser = transformKeys(users[i], transformerKeys);
 
@@ -115,9 +114,9 @@ const transformUsers = (users: User[], key: string, dateTime: string) => {
     i++;
   }
 
-  console.log('USERS USERS', transformedData.length)
-  return transformedData
-}
+  console.log("USERS AFTER", transformedData.length);
+  return transformedData;
+};
 
 export const loadUsersFromFile = async (
   file: string,
@@ -128,7 +127,6 @@ export const loadUsersFromFile = async (
   s.message("Loading users and perparing to migrate");
 
   const type = getFileType(createImportFilePath(file));
-
 
   // convert a CSV to JSON and return array
   if (type === "text/csv") {
@@ -141,7 +139,7 @@ export const loadUsersFromFile = async (
         })
         .on("error", (err) => reject(err))
         .on("end", () => {
-          const transformedData: User[] = transformUsers(users, key, dateTime)
+          const transformedData: User[] = transformUsers(users, key, dateTime);
           resolve(transformedData);
         });
     });
@@ -150,11 +148,9 @@ export const loadUsersFromFile = async (
   } else {
     const users: User[] = JSON.parse(
       fs.readFileSync(createImportFilePath(file), "utf-8"),
-    )
+    );
 
-    const transformedData: User[] = transformUsers(users, key, dateTime)
-
-    console.log('USERS USERS', transformedData.length)
+    const transformedData: User[] = transformUsers(users, key, dateTime);
     s.stop("Users Loaded");
     // p.log.step('Users loaded')
     return transformedData;

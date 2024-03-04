@@ -44,7 +44,6 @@ export const handlers = [
       email_addresses: "email",
       first_name: "firstName",
       last_name: "lastName",
-    }
-  }
-]
-
+    },
+  },
+];
