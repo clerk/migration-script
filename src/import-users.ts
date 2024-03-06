@@ -5,13 +5,13 @@ import * as p from "@clack/prompts";
 import { errorLogger } from "./logger";
 
 // TODO: This is likely not needed anymore
-type CliArgs = {
-  key: string;
-  file: string;
-  instance: string;
-  offest?: string;
-  begin: boolean;
-};
+// type CliArgs = {
+//   key: string;
+//   file: string;
+//   instance: string;
+//   offest?: string;
+//   begin: boolean;
+// };
 
 const s = p.spinner();
 let migrated = 0;
