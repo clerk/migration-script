@@ -97,7 +97,7 @@ In your Dashboard, go to Sessions -> Edit. Add the following:
 
 ```json
 {
-	"userId": "{{user.external_id || user.id}}"
+	"userId": "{{user.externalId || user.id}}"
 }
 ```
 
