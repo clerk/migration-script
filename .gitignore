@@ -1,8 +1,8 @@
 node_modules
 .env
-users.json
-users.csv
+users.*
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 logs
+testing/
