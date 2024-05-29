@@ -26,6 +26,12 @@ const createUser = (userData: User) =>
       lastName: userData.lastName,
       passwordDigest: userData.password,
       passwordHasher: userData.passwordHasher,
+      username: userData.username,
+      // phoneNumber: [userData.phone],
+      totpSecret: userData.totpSecret,
+      unsafeMetadata: userData.unsafeMetadata,
+      privateMetadata: userData.privateMetadata,
+      publicMetadata: userData.publicMetadata,
     })
     : clerkClient.users.createUser({
       externalId: userData.userId,
@@ -33,6 +39,12 @@ const createUser = (userData: User) =>
       firstName: userData.firstName,
       lastName: userData.lastName,
       skipPasswordRequirement: true,
+      username: userData.username,
+      // phoneNumber: [userData.phone],
+      totpSecret: userData.totpSecret,
+      unsafeMetadata: userData.unsafeMetadata,
+      privateMetadata: userData.privateMetadata,
+      publicMetadata: userData.publicMetadata,
     });
 
 async function processUserToClerk(
