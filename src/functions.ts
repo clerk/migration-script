@@ -29,6 +29,16 @@ export const userSchema = z.object({
       "scrypt_firebase",
     ])
     .optional(),
+  phone: z.string().optional(),
+  totpSecret: z.string().optional(),
+  unsafeMetadata: z
+    .object({
+      username: z.string().optional(),
+      isAccessToBeta: z.boolean().optional(),
+    })
+    .optional(),
+  publicMetadata: z.record(z.string(), z.string()).optional(),
+  privateMetadata: z.record(z.string(), z.string()).optional(),
 });
 
 export type User = z.infer<typeof userSchema>;
@@ -75,7 +85,7 @@ export function transformKeys<T extends HandlerMapUnion>(
 ): Record<string, unknown> {
   const transformedData = {};
   for (const [key, value] of Object.entries(data)) {
-    if (value !== "" && value !== '"{}"') {
+    if (value !== "" && value !== '"{}"' && value !== null) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
         let transformedKey = key;
         if (keys.transformer[key]) transformedKey = keys.transformer[key];
@@ -92,6 +102,10 @@ const transformUsers = (
   key: HandlerMapKeys,
   dateTime: string,
 ) => {
+  // if (key === "clerk") {
+  //   return users;
+  // }
+
   // This applies to smaller numbers. Pass in 10, get 5 back.
   const transformedData: User[] = [];
   for (let i = 0; i < users.length; i++) {
@@ -129,8 +143,6 @@ const addDefaultFields = (users: User[], key: string) => {
     const defaultFields =
       handlers.find((obj) => obj.key === key)?.defaults ?? {};
 
-    console.log("defaults", defaultFields);
-
     const updatedUsers: User[] = [];
 
     for (const user of users) {
@@ -141,7 +153,6 @@ const addDefaultFields = (users: User[], key: string) => {
       updatedUsers.push(updated);
     }
 
-    console.log("USERS", JSON.stringify(updatedUsers, null, 2));
     return updatedUsers;
   } else {
     return users;
@@ -185,11 +196,13 @@ export const loadUsersFromFile = async (
       fs.readFileSync(createImportFilePath(file), "utf-8"),
     );
     const usersWithDefaultFields = addDefaultFields(users, key);
+
     const transformedData: User[] = transformUsers(
       usersWithDefaultFields,
       key,
       dateTime,
     );
+
     s.stop("Users Loaded");
     // p.log.step('Users loaded')
     return transformedData;

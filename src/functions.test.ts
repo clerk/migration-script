@@ -41,12 +41,12 @@ test("loadUsersFromFile CSV", async () => {
 });
 
 test("loadUsersFromFile JSON", async () => {
-  const userAuthjs = await loadUsersFromFile("/samples/authjs.json", "clerk");
+  const userAuthjs = await loadUsersFromFile("/samples/authjs.json", "authjs");
   const userSupabase = await loadUsersFromFile(
     "/samples/supabase.json",
-    "clerk",
+    "supabase",
   );
-  const userAuth0 = await loadUsersFromFile("/samples/auth0.json", "clerk");
+  const userAuth0 = await loadUsersFromFile("/samples/auth0.json", "auth0");
 
   expect(userAuthjs.slice(0, 2)).toMatchInlineSnapshot(`
     [

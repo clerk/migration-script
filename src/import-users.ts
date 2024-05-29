@@ -3,6 +3,7 @@ import { env } from "./envs-constants";
 import { User, getDateTimeStamp, userSchema } from "./functions";
 import * as p from "@clack/prompts";
 import { errorLogger } from "./logger";
+import { cooldown } from "./utils";
 
 // TODO: This is likely not needed anymore
 // type CliArgs = {
@@ -16,27 +17,23 @@ import { errorLogger } from "./logger";
 const s = p.spinner();
 let migrated = 0;
 
-async function cooldown(ms: number) {
-  await new Promise((r) => setTimeout(r, ms));
-}
-
 const createUser = (userData: User) =>
   userData.password
     ? clerkClient.users.createUser({
-        externalId: userData.userId,
-        emailAddress: [userData.email],
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        passwordDigest: userData.password,
-        passwordHasher: userData.passwordHasher,
-      })
+      externalId: userData.userId,
+      emailAddress: [userData.email],
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      passwordDigest: userData.password,
+      passwordHasher: userData.passwordHasher,
+    })
     : clerkClient.users.createUser({
-        externalId: userData.userId,
-        emailAddress: [userData.email],
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        skipPasswordRequirement: true,
-      });
+      externalId: userData.userId,
+      emailAddress: [userData.email],
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      skipPasswordRequirement: true,
+    });
 
 async function processUserToClerk(
   userData: User,
@@ -57,9 +54,6 @@ async function processUserToClerk(
       await cooldown(env.RETRY_DELAY_MS);
       return processUserToClerk(userData, total, dateTime);
     }
-    // if (error.status === "form_identifier_exists") {
-    //   console.log("ERROR", error);
-    // }
     errorLogger(
       { userId: userData.userId, status: error.status, errors: error.errors },
       dateTime,
@@ -71,7 +65,7 @@ export const importUsers = async (users: User[]) => {
   const dateTime = getDateTimeStamp();
   s.start();
   const total = users.length;
-  s.message(`Migration users: [0/${total}]`);
+  s.message(`Migrating users: [0/${total}]`);
 
   for (const user of users) {
     await processUserToClerk(user, total, dateTime);
