@@ -1,82 +1,13 @@
 import fs from "fs";
-import path from "path";
-import mime from "mime-types";
 import csvParser from "csv-parser";
-import * as z from "zod";
 import * as p from "@clack/prompts";
 import { validationLogger } from "./logger";
 import { handlers } from "./handlers";
+import { userSchema } from "./validators";
+import { HandlerMapKeys, HandlerMapUnion, User } from "./types";
+import { createImportFilePath, getDateTimeStamp, getFileType } from "./utils";
 
 const s = p.spinner();
-
-// default schema -- incoming data will be transformed to this format
-export const userSchema = z.object({
-  userId: z.string(),
-  email: z.string().email(),
-  username: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  password: z.string().optional(),
-  passwordHasher: z
-    .enum([
-      "argon2i",
-      "argon2id",
-      "bcrypt",
-      "md5",
-      "pbkdf2_sha256",
-      "pbkdf2_sha256_django",
-      "pbkdf2_sha1",
-      "scrypt_firebase",
-    ])
-    .optional(),
-  phone: z.string().optional(),
-  totpSecret: z.string().optional(),
-  unsafeMetadata: z
-    .object({
-      username: z.string().optional(),
-      isAccessToBeta: z.boolean().optional(),
-    })
-    .optional(),
-  publicMetadata: z.record(z.string(), z.string()).optional(),
-  privateMetadata: z.record(z.string(), z.string()).optional(),
-});
-
-export type User = z.infer<typeof userSchema>;
-
-// emulate what Clack CLI expects for an option in a Select / MultiSelect
-export type OptionType = {
-  value: string;
-  label: string | undefined;
-  hint?: string | undefined;
-};
-// create union of string literals from handlers transformer object keys
-export type HandlerMapKeys = (typeof handlers)[number]["key"];
-
-// create a union of all transformer objects in handlers array
-type HandlerMapUnion = (typeof handlers)[number];
-
-// utility function to create file path
-const createImportFilePath = (file: string) => {
-  return path.join(__dirname, "..", file);
-};
-
-// make sure the file exists. CLI will error if it doesn't
-export const checkIfFileExists = (file: string) => {
-  if (fs.existsSync(createImportFilePath(file))) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-// get the file type so we can verify if this is a JSON or CSV
-export const getFileType = (file: string) => {
-  return mime.lookup(createImportFilePath(file));
-};
-
-export const getDateTimeStamp = () => {
-  return new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
-};
 
 // transform incoming data datas to match default schema
 export function transformKeys<T extends HandlerMapUnion>(
@@ -102,10 +33,6 @@ const transformUsers = (
   key: HandlerMapKeys,
   dateTime: string,
 ) => {
-  // if (key === "clerk") {
-  //   return users;
-  // }
-
   // This applies to smaller numbers. Pass in 10, get 5 back.
   const transformedData: User[] = [];
   for (let i = 0; i < users.length; i++) {
@@ -116,6 +43,10 @@ const transformUsers = (
     }
 
     const transformedUser = transformKeys(users[i], transformerKeys);
+
+    // if (key === "clerk") {
+    //   console.log(transformedUser);
+    // }
 
     const validationResult = userSchema.safeParse(transformedUser);
     // Check if validation was successful

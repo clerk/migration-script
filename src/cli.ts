@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import color from "picocolors";
-import { checkIfFileExists, getFileType } from "./functions";
 import { handlers } from "./handlers";
+import { checkIfFileExists, getFileType } from "./utils";
 
 export const runCLI = async () => {
   p.intro(`${color.bgCyan(color.black("Clerk User Migration Utility"))}`);

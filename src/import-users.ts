@@ -1,18 +1,10 @@
 import clerkClient from "@clerk/clerk-sdk-node";
 import { env } from "./envs-constants";
-import { User, getDateTimeStamp, userSchema } from "./functions";
 import * as p from "@clack/prompts";
 import { errorLogger } from "./logger";
-import { cooldown } from "./utils";
-
-// TODO: This is likely not needed anymore
-// type CliArgs = {
-//   key: string;
-//   file: string;
-//   instance: string;
-//   offest?: string;
-//   begin: boolean;
-// };
+import { cooldown, getDateTimeStamp } from "./utils";
+import { userSchema } from "./validators";
+import { User } from "./types";
 
 const s = p.spinner();
 let migrated = 0;
