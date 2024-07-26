@@ -38,20 +38,20 @@ function logger<T extends LogType>(payload: T, dateTime: string) {
   confirmOrCreateFolder(logPath);
 
   try {
-    if (!fs.existsSync(`${logPath}/${dateTime}.json`)) {
+    if (!fs.existsSync(`${logPath}${path.sep}${dateTime}.json`)) {
       const log = [payload];
       fs.writeFileSync(
-        `${logPath}/${dateTime}.json`,
+        `${logPath}${path.sep}${dateTime}.json`,
         JSON.stringify(log, null, 2),
       );
     } else {
       const log = JSON.parse(
-        fs.readFileSync(`${logPath}/${dateTime}.json`, "utf-8"),
+        fs.readFileSync(`${logPath}${path.sep}${dateTime}.json`, "utf-8"),
       );
       log.push(payload);
 
       fs.writeFileSync(
-        `${logPath}/${dateTime}.json`,
+        `${logPath}${path.sep}${dateTime}.json`,
         JSON.stringify(log, null, 2),
       );
     }
