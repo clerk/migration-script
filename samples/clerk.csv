@@ -1,0 +1,5 @@
+id,first_name,last_name,username,email_addresses,phone_numbers,totp_secret,password_digest,password_hasher,unsafe_metadata,public_metadata,private_metadata
+user_2YDryYFVMM1W1plDDKz7Gzf4we6,Jane,Doe,,janedoe@clerk.dev,,,,bcrypt,{},,{}
+user_2ZZCgLE7kJG2CRBxTZ6YUIvzS10,John,Doe,,johndoe@gmail.com,,,,,{},{"discord": {"step": "final"}},{}
+user_2cWszPHuo6P2lCdnhhZbVMfbAIC,John,Hancock,,johnhncock@clerk.dev,,,,,{},{"discord": {"step": "discord"}},{}
+user_2cukOsyNsh0J3MCEvrgM6PkoB0I,Jane,Hancock,,janehancock@clerk.dev,,,,,{},{},{}

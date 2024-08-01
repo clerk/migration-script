@@ -1,0 +1,6 @@
+/logs/**
+/samples/**
+**/*.json
+**/*.csv
+
+
