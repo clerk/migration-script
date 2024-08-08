@@ -25,15 +25,13 @@ Create a `users.json` file. This file should be populated with all the users tha
   {
     "userId": "string",
     "email": "email",
-    "firstName": "string (optional)",
-    "lastName": "string (optional)",
-    "password": "string (optional)",
-    "passwordHasher": "argon2 | argon | bcrypt | md5 | pbkdf2_sha256 | pbkdf2_sha256_django | pbkdf2_sha1 | scrypt_firebase",
+    "name": "string (optional)",
+    "agreedTerms": true/false,
   }
 ]
 ```
 
-The only required fields are `userId` and `email`. First and last names can be added if available. Clerk will also accept hashed password values along with the hashing algorithm used (the default is `bcrypt`).
+The required fields are `userId`, `email`, and  `agreedTerms`. Name is optional in the database, so it may not be present.
 
 Here are a couple examples.
 
@@ -42,19 +40,18 @@ Here are a couple examples.
   {
     "userId": "1",
     "email": "dev@clerk.com",
-    "firstName": "Dev",
-    "lastName": "Agrawal"
+    "name": "Dev Agrawal",
+    "agreedTerms": true,
   },
   {
     "userId": "2",
     "email": "john@blurp.com",
-    "password": "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
-    "passwordHasher": "bcrypt"  // default value
+    "agreedTerms": false
   }
 ]
 ```
 
-The samples/ folder contains some samples, including issues that will produce errors when running the import. 
+~~The samples/ folder contains some samples, including issues that will produce errors when running the import.~~ These are wrong, with our edits.
 
 ### Secret Key
 

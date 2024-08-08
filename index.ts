@@ -27,42 +27,40 @@ if (SECRET_KEY.split("_")[1] !== "live" && IMPORT_TO_DEV === "false") {
 const userSchema = z.object({
   userId: z.string(),
   email: z.string().email(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  password: z.string().optional(),
-  passwordHasher: z
-    .enum([
-      "argon2i",
-      "argon2id",
-      "bcrypt",
-      "md5",
-      "pbkdf2_sha256",
-      "pbkdf2_sha256_django",
-      "pbkdf2_sha1",
-      "scrypt_firebase",
-    ])
-    .optional(),
+  name: z.string().optional(),
+  agreedTerms: z.boolean(),
 });
 
 type User = z.infer<typeof userSchema>;
 
-const createUser = (userData: User) =>
-  userData.password
-    ? clerkClient.users.createUser({
-        externalId: userData.userId,
-        emailAddress: [userData.email],
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        passwordDigest: userData.password,
-        passwordHasher: userData.passwordHasher,
-      })
-    : clerkClient.users.createUser({
-        externalId: userData.userId,
-        emailAddress: [userData.email],
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        skipPasswordRequirement: true,
-      });
+const createUser = (userData: User) => {
+  let firstName: string | undefined = undefined;
+  let lastName: string | undefined = undefined;
+
+  // Attempt to split the name into first and last
+  const nameParts = userData.name?.trim().split(" ") || [];
+  if (nameParts.length === 1) {
+    // If there's just one word, assume it's a first name
+    firstName = nameParts[0];
+  } else if (nameParts.length === 2) {
+    // If there's just two words, assume it's "first last"
+    firstName = nameParts[0];
+    lastName = nameParts[1];
+  } else {
+    // Punt! They can add in their again name correctly.
+  }
+
+  return clerkClient.users.createUser({
+    externalId: userData.userId,
+    emailAddress: [userData.email],
+    firstName,
+    lastName,
+    skipPasswordRequirement: true,
+    publicMetadata: {
+      agreedTerms: userData.agreedTerms,
+    },
+  });
+};
 
 const now = new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
 function appendLog(payload: any) {
