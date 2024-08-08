@@ -38,16 +38,15 @@ const createUser = (userData: User) => {
   let lastName: string | undefined = undefined;
 
   // Attempt to split the name into first and last
-  const nameParts = userData.name?.trim().split(" ") || [];
-  if (nameParts.length === 1) {
-    // If there's just one word, assume it's a first name
-    firstName = nameParts[0];
-  } else if (nameParts.length === 2) {
+  const trimmed = userData.name?.trim();
+  const nameParts = trimmed?.split(" ") || [];
+  if (nameParts.length === 2) {
     // If there's just two words, assume it's "first last"
     firstName = nameParts[0];
     lastName = nameParts[1];
   } else {
-    // Punt! They can add in their again name correctly.
+    // Punt! Put it in the `firstName` and let them fix it in the app.
+    firstName = trimmed
   }
 
   return clerkClient.users.createUser({
