@@ -127,7 +127,7 @@ You could add a column in your user table inside of your database called `ClerkI
 
 First, run this query in Postgres to grab the data in a form we can work with:
 ```sql
-select id, email, COALESCE(name, '') as "name", LOWER(agreed_terms::text) as "agreedTerms" from users;
+select id as "userId", email, COALESCE(name, '') as "name", LOWER(agreed_terms::text) as "agreedTerms" from users;
 ```
 
 Save the results of that query out as a CSV file named `users.csv` and place it in the root of this repository.
