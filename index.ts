@@ -38,7 +38,12 @@ const createUser = (userData: User) => {
   let lastName: string | undefined = undefined;
 
   // Attempt to split the name into first and last
-  const trimmed = userData.name?.trim();
+  // Work around a weird bug in the csv converter's handling of empty strings
+  let name = userData.name
+  if (name === "\"") {
+    name = undefined
+  }
+  const trimmed = name?.trim();
   const nameParts = trimmed?.split(" ") || [];
   if (nameParts.length === 2) {
     // If there's just two words, assume it's "first last"

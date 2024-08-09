@@ -123,3 +123,13 @@ You could continue to generate unique ids for the database as done previously, a
 
 You could add a column in your user table inside of your database called `ClerkId`. Use that column to store the userId from Clerk directly into your database.
 
+# Exporting & Converting from Postgres
+
+First, run this query in Postgres to grab the data in a form we can work with:
+```sql
+select id, email, COALESCE(name, '') as "name", LOWER(agreed_terms::text) as "agreedTerms" from users;
+```
+
+Save the results of that query out as a CSV file named `users.csv` and place it in the root of this repository.
+
+Run `npm run convert` to execute the CSV-to-JSON conversion script, and the resulting `users.json` file can be used with the main script mentioned above.
