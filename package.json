@@ -8,14 +8,18 @@
   "license": "ISC",
   "scripts": {
     "start": "bun index.ts",
-    "convert": "bun convert.ts"
+    "convert": "bun convert.ts",
+    "scrub": "bun scrubber.ts"
   },
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^4.12.21",
+    "@clerk/clerk-sdk-node": "^5.0.27",
     "bun": "^1.0.12",
     "convert-csv-to-json": "^2.48.0",
     "dotenv": "^16.3.1",
     "ora": "^7.0.1",
     "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.8"
   }
 }

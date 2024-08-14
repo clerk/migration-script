@@ -3,7 +3,7 @@ config();
 
 import * as fs from "fs";
 import * as z from "zod";
-import clerkClient from "@clerk/clerk-sdk-node";
+import { clerkClient } from "@clerk/clerk-sdk-node";
 import ora, { Ora } from "ora";
 
 const SECRET_KEY = process.env.CLERK_SECRET_KEY;
