@@ -1,9 +1,8 @@
 node_modules
 .env
-*.log
 users.json
 users.csv
-migration-log.json
+migration-log-*.json
 bun.lockb
 package-lock.json
 yarn.lock
