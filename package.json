@@ -9,7 +9,8 @@
   "scripts": {
     "start": "bun index.ts",
     "convert": "bun convert.ts",
-    "scrub": "bun scrubber.ts"
+    "scrub": "bun scrubber.ts",
+    "teams": "bun migrate_teams.ts"
   },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.0.27",
