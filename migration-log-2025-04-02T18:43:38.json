@@ -1,0 +1,781 @@
+
+{
+  "userId": "user_2kIuRhlgDvk00yqaei0PfWFsNP5",
+  "status": 422,
+  "clerkTraceId": "29f22b8ef920a8d1ec35b48c597cf9b0",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2kIv4fbSIdgEJTSMhCNkPrbSF7N",
+  "status": 422,
+  "clerkTraceId": "1ed69fa5e5102f67e5a36020cf3a1834",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2lwHB6QOdOahkdgdVJZis0bVxeV",
+  "status": 422,
+  "clerkTraceId": "004517b233cded60e5a36020cf3a1492",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2mWbpBeBF1fDezW0SHn1UmWCNJu",
+  "status": 422,
+  "clerkTraceId": "9aa4395573885ca4ec35b48c597cf722",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2mwjC80GOemd9JPXmWMhFb0dfuf",
+  "status": 422,
+  "clerkTraceId": "c13e068be46d18e5e5a36020cf3a1761",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2nDKhUXiK392lTkjbZgVq2yXFIB",
+  "status": 422,
+  "clerkTraceId": "feeeae7b892d57f0ec35b48c597cfb6a",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2nWv2rD9syTgXlyFuilGZ4EWED7",
+  "status": 422,
+  "clerkTraceId": "fc466ccb92807be0ec35b48c597cf58e",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2nXTg2XE48PV8CbCKmDscEGXYI4",
+  "status": 422,
+  "clerkTraceId": "5b26a8e547fcb0a9ec35b48c597cf541",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2naTA1EDbMAU4Q7zsXVnCyWctao",
+  "status": 422,
+  "clerkTraceId": "8ed854611b172fffec35b48c597cf05f",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2ncUGmBnNwDb4233PIkY6k9Ym0s",
+  "status": 422,
+  "clerkTraceId": "66ff1f17aeb781bbe5a36020cf3a1579",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2nw9RXBnAbJvtGBxI1BxM4NQ74R",
+  "status": 422,
+  "clerkTraceId": "02ac4f15bfab7ad4ec35b48c597cf012",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2oOWslBjfUIFSk6m7rwiDQwVEOv",
+  "status": 422,
+  "clerkTraceId": "a0e25a0e99f037e943fdf4f6444354d4",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2pP6lzlspV47Gh5jfRp94ACSVZq",
+  "status": 422,
+  "clerkTraceId": "a86248104f51e61e43fdf4f644435f87",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2pjz6VmvS4iLd0Dy176kHzZeeT1",
+  "status": 422,
+  "clerkTraceId": "8fa4db58814ed8fce5a36020cf3a1e98",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2q7xyWep5pTl2QTKUJRYgC7BbN4",
+  "status": 422,
+  "clerkTraceId": "8ea1bf871d15dfaee5a36020cf3a1b17",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2qP8o7OnXbsoLarLoVvCqele8Ht",
+  "status": 422,
+  "clerkTraceId": "e5a2c0837d4a1219ec35b48c597cff3e",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2qP9zND2JaZprjHqQ1YCJu9GnbF",
+  "status": 422,
+  "clerkTraceId": "47d936e4fff4195fe5a36020cf3a12be",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2qRuQlws8CiCqDwQrC1lwAZ0hpA",
+  "status": 422,
+  "clerkTraceId": "cf53bd6ec3845736ec35b48c597cf480",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2qpBSKXOm8K7p3GyAlGjecinSEV",
+  "status": 422,
+  "clerkTraceId": "7dfc4b98503442fb43fdf4f644435455",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2sHMFvVk462L2XSDFeZZ2luKXvg",
+  "status": 422,
+  "clerkTraceId": "980fbd2295d2de5cdd173de5f6605ac3",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2u0CNOkvvqRafJI7AEgMHYFFmDV",
+  "status": 422,
+  "clerkTraceId": "87105e596afed689cd39f3ab2ee800b0",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2u0DxN9yK5tG1b1uW1fScMtXaV7",
+  "status": 422,
+  "clerkTraceId": "bab86883092ef3cc04ab05e7fb50b8ff",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2u0PLB4iB0Xu0sMNqih3DFluZ4k",
+  "status": 422,
+  "clerkTraceId": "e68f4ec4fff97f544f4e2ee2a5f697c1",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2u0TAR6yAAVm2WbZsn0uyIiFxWL",
+  "status": 422,
+  "clerkTraceId": "ae4ed08678e66e7ecd39f3ab2ee809a1",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2u9AdAbHBdwE6YsfsCEXM9jij48",
+  "status": 422,
+  "clerkTraceId": "52c3fad2bc9db0244f4e2ee2a5f698bf",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uCQlLXzVtexqBAMKzIeGlMwuQh",
+  "status": 422,
+  "clerkTraceId": "39d02b5e85af7b4404ab05e7fb50b1fd",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uCTxJBk0ahMvGjvFN4oDG06egn",
+  "status": 422,
+  "clerkTraceId": "2764c68b2dccf151cd39f3ab2ee80101",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uE04R2kfdq5MIhiD4tbeTh9AFt",
+  "status": 422,
+  "clerkTraceId": "26033fe39eacc6204f4e2ee2a5f6934b",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uHERwV2SwmBpVaA2WGx3acKW3O",
+  "status": 422,
+  "clerkTraceId": "353057024fc85d8504ab05e7fb50b1b8",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uIUU0nSC45y5DMbSlds6v2KiNU",
+  "status": 422,
+  "clerkTraceId": "e6d6702d9b62b2a504ab05e7fb50b4e3",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uJte9tEvetpWYRITSPN35yxoID",
+  "status": 422,
+  "clerkTraceId": "17d32e4489a352e304ab05e7fb50bb6b",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uLd0Z9gXfxIafsQrafkmQqr7ko",
+  "status": 422,
+  "clerkTraceId": "c0a0041c4d0930884f4e2ee2a5f69145",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uMXstSxQpIdiiFdg9nlWjZJQ07",
+  "status": 422,
+  "clerkTraceId": "00dc3a45b094c5574f4e2ee2a5f69526",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uN4uKF2jiDlPNHF0jWFspnIJ8D",
+  "status": 422,
+  "clerkTraceId": "6114bcf7a162210b1deb91693f69ae48",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uPQAuVtYJzivzRc8wB9RtjUJTw",
+  "status": 422,
+  "clerkTraceId": "726214742a2f38b34f4e2ee2a5f69dad",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uUi3NvChRxaSrzXywKS64yVGCD",
+  "status": 422,
+  "clerkTraceId": "953356b33ac64d7e4f4e2ee2a5f692ef",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2uWIPJfJVV1DgICdmVTb3OLYyMD",
+  "status": 422,
+  "clerkTraceId": "7087d5421d7d6a5d4f4e2ee2a5f699bb",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2v4jalJooHtnbyP0j0c21HzxyIl",
+  "status": 422,
+  "clerkTraceId": "11fbbfc191573af551cbbdbc79602a89",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
+{
+  "userId": "user_2v5xFf0wkbIpOpia60iiFDkribk",
+  "status": 422,
+  "clerkTraceId": "d9666071cf0b28b11deb91693f69a3ba",
+  "clerkError": true,
+  "errors": [
+    {
+      "code": "form_identifier_exists",
+      "message": "That email address is taken. Please try another.",
+      "meta": {}
+    },
+    {
+      "code": "form_identifier_exists",
+      "message": "That username is taken. Please try another.",
+      "meta": {}
+    }
+  ],
+  "originalLine": 155,
+  "originalColumn": 12
+}
