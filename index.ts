@@ -43,11 +43,17 @@ const userSchema = z.object({
 			"argon2i",
 			"argon2id",
 			"bcrypt",
+			"bcrypt_sha256_django",
+			"ldap_ssha",
 			"md5",
+			"md5_phpass",
 			"pbkdf2_sha256",
 			"pbkdf2_sha256_django",
 			"pbkdf2_sha1",
+			"phpass",
 			"scrypt_firebase",
+			"scrypt_werkzeug",
+			"sha256",
 		])
 		.optional(),
 	/** Metadata saved on the user, that is visible to both your Frontend and Backend APIs */
