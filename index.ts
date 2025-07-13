@@ -24,6 +24,25 @@ if (SECRET_KEY.split("_")[1] !== "live" && IMPORT_TO_DEV === "false") {
 	);
 }
 
+// Define the input Clerk user export format
+const clerkUserSchema = z.object({
+	userId: z.string(),
+	email: z.string().email(),
+	first_name: z.string().nullable(),
+	last_name: z.string().nullable(),
+	email_addresses: z.array(
+		z.object({
+			email_address: z.string().email(),
+			verification: z.object({
+				status: z.string(),
+			}).optional(),
+		})
+	),
+	public_metadata: z.record(z.string(), z.unknown()).optional(),
+	private_metadata: z.record(z.string(), z.unknown()).optional(),
+	unsafe_metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
 const userSchema = z.object({
 	/** The ID of the user as used in your external systems or your previous authentication solution. Must be unique across your instance. */
 	userId: z.string(),
@@ -60,11 +79,25 @@ const userSchema = z.object({
 	public_metadata: z.record(z.string(), z.unknown()).optional(),
 	/** Metadata saved on the user, that is only visible to your Backend APIs */
 	private_metadata: z.record(z.string(), z.unknown()).optional(),
-	/** Metadata saved on the user, that can be updated from both the Frontend and Backend APIs. Note: Since this data can be modified from the frontend, it is not guaranteed to be safe. */
+	/** Metadata saved on the user, that can be modified from the frontend. Note: Since this data can be modified from the frontend, it is not guaranteed to be safe. */
 	unsafe_metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 type User = z.infer<typeof userSchema>;
+type ClerkUser = z.infer<typeof clerkUserSchema>;
+
+// Transform Clerk user export format to import format
+function transformClerkUser(clerkUser: ClerkUser): User {
+	return {
+		userId: clerkUser.userId,
+		email: clerkUser.email_addresses[0]?.email_address || clerkUser.email,
+		firstName: clerkUser.first_name || undefined,
+		lastName: clerkUser.last_name || undefined,
+		public_metadata: clerkUser.public_metadata,
+		private_metadata: clerkUser.private_metadata,
+		unsafe_metadata: clerkUser.unsafe_metadata,
+	};
+}
 
 const createUser = (userData: User) =>
 	userData.password
@@ -101,15 +134,25 @@ function appendLog(payload: any) {
 let migrated = 0;
 let alreadyExists = 0;
 
-async function processUserToClerk(userData: User, spinner: Ora) {
+async function processUserToClerk(userData: ClerkUser, spinner: Ora) {
 	const txt = spinner.text;
 	try {
-		const parsedUserData = userSchema.safeParse(userData);
+		// First validate the input format
+		const parsedClerkUser = clerkUserSchema.safeParse(userData);
+		if (!parsedClerkUser.success) {
+			throw parsedClerkUser.error;
+		}
+
+		// Transform to import format
+		const transformedUser = transformClerkUser(parsedClerkUser.data);
+
+		// Validate the transformed data
+		const parsedUserData = userSchema.safeParse(transformedUser);
 		if (!parsedUserData.success) {
 			throw parsedUserData.error;
 		}
-		await createUser(parsedUserData.data);
 
+		await createUser(parsedUserData.data);
 		migrated++;
 	} catch (error) {
 		if (error.status === 422) {
@@ -145,7 +188,7 @@ async function main() {
 
 	console.log(`Fetching users from ${inputFileName}`);
 
-	const parsedUserData: any[] = JSON.parse(
+	const parsedUserData: ClerkUser[] = JSON.parse(
 		fs.readFileSync(inputFileName, "utf-8")
 	);
 	const offsetUsers = parsedUserData.slice(OFFSET);
