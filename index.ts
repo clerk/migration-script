@@ -11,6 +11,7 @@ const DELAY = parseInt(process.env.DELAY_MS ?? `1_000`);
 const RETRY_DELAY = parseInt(process.env.RETRY_DELAY_MS ?? `10_000`);
 const IMPORT_TO_DEV = process.env.IMPORT_TO_DEV_INSTANCE ?? "false";
 const OFFSET = parseInt(process.env.OFFSET ?? `0`);
+const CONCURRENCY_LIMIT = parseInt(process.env.CONCURRENCY_LIMIT ?? `10`);
 
 if (!SECRET_KEY) {
 	throw new Error(
@@ -74,7 +75,7 @@ const createUser = (userData: User) =>
 				firstName: userData.firstName,
 				lastName: userData.lastName,
 				passwordDigest: userData.password,
-				passwordHasher: userData.passwordHasher,
+				passwordHasher: userData.passwordHasher as any, // Clerk SDK type issue
 				privateMetadata: userData.private_metadata,
 				publicMetadata: userData.public_metadata,
 				unsafeMetadata: userData.unsafe_metadata,
@@ -91,12 +92,35 @@ const createUser = (userData: User) =>
 		  });
 
 const now = new Date().toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
-function appendLog(payload: any) {
-	fs.appendFileSync(
-		`./migration-log-${now}.json`,
-		`\n${JSON.stringify(payload, null, 2)}`
-	);
+const logFilePath = `./migration-log-${now}.json`;
+
+// Use a write stream for better performance
+let logStream: fs.WriteStream | null = null;
+
+function initLogStream() {
+	if (!logStream) {
+		logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+	}
 }
+
+function appendLog(payload: any) {
+	initLogStream();
+	logStream!.write(`\n${JSON.stringify(payload, null, 2)}`);
+}
+
+// Ensure log stream is closed on exit
+process.on('exit', () => {
+	if (logStream) {
+		logStream.end();
+	}
+});
+
+process.on('SIGINT', () => {
+	if (logStream) {
+		logStream.end();
+	}
+	process.exit(0);
+});
 
 let migrated = 0;
 let alreadyExists = 0;
@@ -104,12 +128,8 @@ let alreadyExists = 0;
 async function processUserToClerk(userData: User, spinner: Ora) {
 	const txt = spinner.text;
 	try {
-		const parsedUserData = userSchema.safeParse(userData);
-		if (!parsedUserData.success) {
-			throw parsedUserData.error;
-		}
-		await createUser(parsedUserData.data);
-
+		// User data is already validated, so we can directly create the user
+		await createUser(userData);
 		migrated++;
 	} catch (error) {
 		if (error.status === 422) {
@@ -131,11 +151,59 @@ async function processUserToClerk(userData: User, spinner: Ora) {
 }
 
 async function cooldown() {
-	await new Promise((r) => setTimeout(r, DELAY));
+	// No delay needed - removed for performance
+	return Promise.resolve();
 }
 
 async function rateLimitCooldown() {
+	console.log(`Rate limit reached, waiting for ${RETRY_DELAY} ms...`);
 	await new Promise((r) => setTimeout(r, RETRY_DELAY));
+}
+
+// Process users concurrently with a limit
+async function processConcurrently<T>(
+	items: T[],
+	processor: (item: T, index: number) => Promise<void>,
+	concurrencyLimit: number,
+	spinner: Ora
+): Promise<void> {
+	let completed = 0;
+	let running = 0;
+	let index = 0;
+
+	return new Promise((resolve, reject) => {
+		const processNext = async () => {
+			if (index >= items.length) {
+				if (running === 0) resolve();
+				return;
+			}
+
+			const currentIndex = index++;
+			const item = items[currentIndex];
+			running++;
+
+			try {
+				spinner.text = `Processing user ${completed + 1}/${items.length} (${running} concurrent)`;
+				await processor(item, currentIndex);
+				completed++;
+				running--;
+				
+				if (completed === items.length) {
+					resolve();
+				} else {
+					processNext();
+				}
+			} catch (error) {
+				running--;
+				reject(error);
+			}
+		};
+
+		// Start initial batch of concurrent operations
+		for (let i = 0; i < Math.min(concurrencyLimit, items.length); i++) {
+			processNext();
+		}
+	});
 }
 
 async function main() {
@@ -152,17 +220,41 @@ async function main() {
 	console.log(
 		`users.json found and parsed, attempting migration with an offset of ${OFFSET}`
 	);
+	console.log(`Processing ${offsetUsers.length} users with concurrency limit of ${CONCURRENCY_LIMIT}`);
 
-	let i = 0;
+	// Pre-validate all user data to catch errors early
+	const validatedUsers: User[] = [];
+	const validationErrors: any[] = [];
+	
+	for (let i = 0; i < offsetUsers.length; i++) {
+		const parsed = userSchema.safeParse(offsetUsers[i]);
+		if (parsed.success) {
+			validatedUsers.push(parsed.data);
+		} else {
+			validationErrors.push({ 
+				index: i, 
+				userId: offsetUsers[i]?.userId, 
+				error: "error" in parsed ? parsed.error.errors : "Unknown validation error"
+			});
+		}
+	}
+
+	if (validationErrors.length > 0) {
+		console.log(`${validationErrors.length} users failed validation and will be skipped`);
+		validationErrors.forEach(err => appendLog(err));
+	}
+
 	const spinner = ora(`Migrating users`).start();
 
-	for (const userData of offsetUsers) {
-		spinner.text = `Migrating user ${i}/${offsetUsers.length}, cooldown`;
-		await cooldown();
-		i++;
-		spinner.text = `Migrating user ${i}/${offsetUsers.length}`;
-		await processUserToClerk(userData, spinner);
-	}
+	// Process users concurrently
+	await processConcurrently(
+		validatedUsers,
+		async (userData: User, index: number) => {
+			await processUserToClerk(userData, spinner);
+		},
+		CONCURRENCY_LIMIT,
+		spinner
+	);
 
 	spinner.succeed(`Migration complete`);
 	return;
