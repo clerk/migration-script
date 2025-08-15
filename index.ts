@@ -125,8 +125,20 @@ process.on('SIGINT', () => {
 let migrated = 0;
 let alreadyExists = 0;
 
-async function processUserToClerk(userData: User, spinner: Ora) {
+// Set to track users already being processed or completed
+const processedUsers = new Set<string>();
+
+async function processUserToClerk(userData: User, spinner: Ora, retryCount = 0) {
 	const txt = spinner.text;
+	
+	// Check if this user is already being processed or has been completed
+	if (processedUsers.has(userData.userId)) {
+		return;
+	}
+	
+	// Mark user as being processed
+	processedUsers.add(userData.userId);
+	
 	try {
 		// User data is already validated, so we can directly create the user
 		await createUser(userData);
@@ -140,10 +152,22 @@ async function processUserToClerk(userData: User, spinner: Ora) {
 
 		// Keep cooldown in case rate limit is reached as a fallback if the thread blocking fails
 		if (error.status === 429) {
-			spinner.text = `${txt} - rate limit reached, waiting for ${RETRY_DELAY} ms`;
-			await rateLimitCooldown();
+			// Remove from processed set since we're going to retry
+			processedUsers.delete(userData.userId);
+			
+			// Add exponential backoff and jitter to prevent thundering herd
+			const backoffMs = RETRY_DELAY * Math.pow(2, retryCount) + Math.random() * 1000;
+			spinner.text = `${txt} - rate limit reached, waiting for ${Math.round(backoffMs)} ms (retry ${retryCount + 1})`;
+			await new Promise((r) => setTimeout(r, backoffMs));
 			spinner.text = txt;
-			return processUserToClerk(userData, spinner);
+			
+			// Limit retries to prevent infinite recursion
+			if (retryCount < 3) {
+				return processUserToClerk(userData, spinner, retryCount + 1);
+			} else {
+				appendLog({ userId: userData.userId, error: 'Max retries exceeded for rate limit', ...error });
+				return;
+			}
 		}
 
 		appendLog({ userId: userData.userId, ...error });
