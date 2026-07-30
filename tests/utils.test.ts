@@ -5,6 +5,7 @@ import {
 	getDateTimeStamp,
 	getFileType,
 	getRetryDelay,
+	normalizeErrorMessage,
 	tryCatch,
 } from '../src/lib';
 import path from 'path';
@@ -147,5 +148,23 @@ describe('getRetryDelay', () => {
 		const result = getRetryDelay(undefined, customDefault);
 		expect(result.delayMs).toBe(5000);
 		expect(result.delaySeconds).toBe(5);
+	});
+});
+
+describe('normalizeErrorMessage', () => {
+	test('normalizes multiple field arrays by sorting field names', () => {
+		const result = normalizeErrorMessage(
+			'["username" "email"] must have ["last_name" "first_name"] filled'
+		);
+
+		expect(result).toBe(
+			'["email" "username"] must have ["first_name" "last_name"] filled'
+		);
+	});
+
+	test('leaves bracket-heavy input without a closing bracket unchanged', () => {
+		const input = `${'[\\'.repeat(10_000)} missing closing bracket`;
+
+		expect(normalizeErrorMessage(input)).toBe(input);
 	});
 });

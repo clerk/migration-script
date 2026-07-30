@@ -320,19 +320,50 @@ export function resolveConnectionString(
  * @returns The normalized error message with sorted field arrays
  */
 export function normalizeErrorMessage(errorMessage: string): string {
-	// Match array-like patterns in error messages: ["field1" "field2"]
-	const arrayPattern = /\[([^\]]+)\]/g;
+	let normalized = '';
+	let lastCopiedIndex = 0;
+	let arrayStartIndex = -1;
 
-	return errorMessage.replace(arrayPattern, (_match, fields: string) => {
-		// Split by spaces and quotes, filter out empty strings
-		const fieldNames = fields
-			.split(/["'\s]+/)
-			.filter((f: string) => f.trim().length > 0);
+	for (let i = 0; i < errorMessage.length; i++) {
+		const char = errorMessage[i];
 
-		// Sort field names alphabetically
-		fieldNames.sort();
+		if (arrayStartIndex === -1) {
+			if (char === '[') arrayStartIndex = i;
+			continue;
+		}
 
-		// Reconstruct the array notation
-		return `[${fieldNames.map((f: string) => `"${f}"`).join(' ')}]`;
-	});
+		if (char !== ']') continue;
+
+		normalized += errorMessage.slice(lastCopiedIndex, arrayStartIndex);
+		normalized += normalizeFieldArray(
+			errorMessage.slice(arrayStartIndex + 1, i)
+		);
+		lastCopiedIndex = i + 1;
+		arrayStartIndex = -1;
+	}
+
+	return normalized + errorMessage.slice(lastCopiedIndex);
+}
+
+function normalizeFieldArray(fields: string): string {
+	const fieldNames: string[] = [];
+	let currentField = '';
+
+	for (const char of fields) {
+		if (char === '"' || char === "'" || char.trim() === '') {
+			if (currentField.length > 0) {
+				fieldNames.push(currentField);
+				currentField = '';
+			}
+			continue;
+		}
+
+		currentField += char;
+	}
+
+	if (currentField.length > 0) fieldNames.push(currentField);
+
+	fieldNames.sort();
+
+	return `[${fieldNames.map((fieldName: string) => `"${fieldName}"`).join(' ')}]`;
 }
