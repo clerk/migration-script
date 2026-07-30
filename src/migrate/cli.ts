@@ -596,7 +596,7 @@ export const loadRawUsers = async (
 
 	// Run preTransform if defined (e.g., Firebase needs to add CSV headers or extract JSON users array)
 	let preExtractedData: Record<string, unknown>[] | undefined;
-	if ('preTransform' in transformer) {
+	if (typeof transformer.preTransform === 'function') {
 		const preTransformResult = await Promise.resolve(
 			transformer.preTransform(filePath, type || '')
 		);
@@ -735,8 +735,9 @@ export function displayCrossReference(
 	// --- Field readiness sections ---
 	const sections: Partial<Record<string, ReadinessItem[]>> = {};
 	for (const item of items) {
-		if (!sections[item.section]) sections[item.section] = [];
-		sections[item.section].push(item);
+		const sectionItems = sections[item.section] ?? [];
+		sectionItems.push(item);
+		sections[item.section] = sectionItems;
 	}
 
 	const needsAttention: ReadinessItem[] = [];

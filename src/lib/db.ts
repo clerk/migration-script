@@ -100,7 +100,8 @@ async function createMysqlClient(connectionString: string): Promise<DbClient> {
 			sql: string,
 			params?: unknown[]
 		): Promise<{ rows: T[] }> {
-			const [rows] = await connection.execute(sql, params);
+			const values = (params ?? []) as (Record<string, unknown> | null)[];
+			const [rows] = await connection.execute(sql, values);
 			return { rows: rows as T[] };
 		},
 		async end(): Promise<void> {
@@ -124,9 +125,10 @@ async function createSqliteClient(connectionString: string): Promise<DbClient> {
 		dbType: 'sqlite',
 		query<T extends Record<string, unknown>>(
 			sql: string,
-			_params?: unknown[]
+			params?: unknown[]
 		): Promise<{ rows: T[] }> {
-			const rows = db.prepare(sql).all() as T[];
+			const statement = db.prepare(sql);
+			const rows = (params ? statement.all(...params) : statement.all()) as T[];
 			return Promise.resolve({ rows });
 		},
 		end(): Promise<void> {

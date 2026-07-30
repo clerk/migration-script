@@ -120,7 +120,7 @@ function transformUsers(
 		}
 
 		// Apply transformer-specific post-transformation if defined
-		if ('postTransform' in transformer) {
+		if (typeof transformer.postTransform === 'function') {
 			transformer.postTransform(transformedUser);
 		}
 		const validationResult = userSchema.safeParse(transformedUser);
@@ -238,7 +238,7 @@ export async function loadUsersFromFile(
 	const type = getFileType(filePath);
 
 	// Run preTransform if defined (e.g., Firebase needs to add CSV headers or extract JSON users array)
-	if ('preTransform' in transformer) {
+	if (typeof transformer.preTransform === 'function') {
 		const preTransformResult = await Promise.resolve(
 			transformer.preTransform(filePath, type || '')
 		);

@@ -142,11 +142,9 @@ export const readMigrationFile = async (
 	if (type === 'text/csv') {
 		// Firebase CSV files don't have headers, so we need to provide them
 		const isFirebase = transformerKey === 'firebase';
-		const parserOptions: csvParser.Options = { skipComments: true };
-
-		if (isFirebase) {
-			parserOptions.headers = FIREBASE_CSV_HEADERS;
-		}
+		const parserOptions: csvParser.Options = isFirebase
+			? { skipComments: true, headers: FIREBASE_CSV_HEADERS }
+			: { skipComments: true };
 
 		return new Promise((resolve, reject) => {
 			fs.createReadStream(fullPath)
