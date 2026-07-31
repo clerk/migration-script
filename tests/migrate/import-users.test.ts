@@ -93,7 +93,7 @@ vi.mock('../../src/logger', () => ({
 vi.mock('../../src/envs-constants', () => ({
 	env: {
 		CLERK_SECRET_KEY: 'test_secret_key',
-		RATE_LIMIT: 10,
+		RATE_LIMIT: 1000,
 		CONCURRENCY_LIMIT: 5, // Higher for faster tests
 	},
 	MAX_RETRIES: 5,
@@ -101,13 +101,47 @@ vi.mock('../../src/envs-constants', () => ({
 }));
 
 // Import after mocks are set up
-import { importUsers } from '../../src/migrate/import-users';
+import {
+	createApiScheduler,
+	importUsers,
+} from '../../src/migrate/import-users';
 import { normalizeErrorMessage } from '../../src/lib';
 import * as logger from '../../src/logger';
 
 describe('importUsers', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	describe('createApiScheduler', () => {
+		test('spaces API calls according to the rate limit', async () => {
+			vi.useFakeTimers();
+			vi.setSystemTime(0);
+
+			const scheduleApiCall = createApiScheduler(2, 2);
+			const callTimes: number[] = [];
+
+			const firstCall = scheduleApiCall(() => {
+				callTimes.push(Date.now());
+				return Promise.resolve();
+			});
+			const secondCall = scheduleApiCall(() => {
+				callTimes.push(Date.now());
+				return Promise.resolve();
+			});
+
+			await vi.advanceTimersByTimeAsync(0);
+			await firstCall;
+
+			expect(callTimes).toEqual([0]);
+
+			await vi.advanceTimersByTimeAsync(500);
+			await secondCall;
+
+			expect(callTimes).toEqual([0, 500]);
+
+			vi.useRealTimers();
+		});
 	});
 
 	describe('createUser API calls', () => {

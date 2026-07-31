@@ -17,6 +17,30 @@ let failed = 0;
 const errorCounts = new Map<string, number>();
 let lastProcessedUserId: string | null = null;
 
+type ApiScheduler = <T>(fn: () => Promise<T>) => Promise<T>;
+
+export function createApiScheduler(
+	concurrencyLimit: number,
+	rateLimit: number
+): ApiScheduler {
+	const limit = pLimit(Math.max(1, concurrencyLimit));
+	const intervalMs = Math.ceil(1000 / Math.max(1, rateLimit));
+	let nextRequestAt = 0;
+
+	return (fn) =>
+		limit(async () => {
+			const now = Date.now();
+			const waitMs = Math.max(0, nextRequestAt - now);
+			nextRequestAt = Math.max(now, nextRequestAt) + intervalMs;
+
+			if (waitMs > 0) {
+				await new Promise((resolve) => setTimeout(resolve, waitMs));
+			}
+
+			return fn();
+		});
+}
+
 /**
  * Gets the last processed user ID
  * @returns The user ID of the last processed user, or null if none processed
@@ -46,7 +70,7 @@ export function getLastProcessedUserId(): string | null {
 async function createUser(
 	userData: User,
 	skipPasswordRequirement: boolean,
-	limit: ReturnType<typeof pLimit>,
+	scheduleApiCall: ApiScheduler,
 	dateTime: string
 ) {
 	const clerk = createClerkClient({ secretKey: env.CLERK_SECRET_KEY });
@@ -136,9 +160,9 @@ async function createUser(
 	// If user has no password and skipPasswordRequirement is false, the API will return an error
 
 	// Create the user with the primary email
-	// Rate-limited via the shared limiter
+	// Rate-limited via the shared API scheduler
 	const [createdUser, createError] = await tryCatch(
-		limit(() => clerk.users.createUser(userParams))
+		scheduleApiCall(() => clerk.users.createUser(userParams))
 	);
 
 	if (createError) {
@@ -146,12 +170,12 @@ async function createUser(
 	}
 
 	// Add additional emails to the created user
-	// Each API call is rate-limited via the shared limiter
+	// Each API call is rate-limited via the shared API scheduler
 	// Use tryCatch to make these non-fatal - if they fail, log but continue
 	const emailPromises = additionalEmails
 		.filter((email) => email)
 		.map((email) =>
-			limit(async () => {
+			scheduleApiCall(async () => {
 				const [, emailError] = await tryCatch(
 					clerk.emailAddresses.createEmailAddress({
 						userId: createdUser.id,
@@ -182,12 +206,12 @@ async function createUser(
 		);
 
 	// Add additional phones to the created user
-	// Each API call is rate-limited via the shared limiter
+	// Each API call is rate-limited via the shared API scheduler
 	// Use tryCatch to make these non-fatal - if they fail, log but continue
 	const phonePromises = additionalPhones
 		.filter((phone) => phone)
 		.map((phone) =>
-			limit(async () => {
+			scheduleApiCall(async () => {
 				const [, phoneError] = await tryCatch(
 					clerk.phoneNumbers.createPhoneNumber({
 						userId: createdUser.id,
@@ -220,7 +244,7 @@ async function createUser(
 	const unverifiedEmailPromises = unverifiedEmails
 		.filter((email) => email)
 		.map((email) =>
-			limit(async () => {
+			scheduleApiCall(async () => {
 				const [, emailError] = await tryCatch(
 					clerk.emailAddresses.createEmailAddress({
 						userId: createdUser.id,
@@ -252,7 +276,7 @@ async function createUser(
 	const unverifiedPhonePromises = unverifiedPhones
 		.filter((phone) => phone)
 		.map((phone) =>
-			limit(async () => {
+			scheduleApiCall(async () => {
 				const [, phoneError] = await tryCatch(
 					clerk.phoneNumbers.createPhoneNumber({
 						userId: createdUser.id,
@@ -300,11 +324,13 @@ async function createUser(
 	}
 
 	if (Object.keys(updateParams).length > 0) {
-		await limit(() => clerk.users.updateUser(createdUser.id, updateParams));
+		await scheduleApiCall(() =>
+			clerk.users.updateUser(createdUser.id, updateParams)
+		);
 	}
 
 	if (userData.banned) {
-		await limit(() => clerk.users.banUser(createdUser.id));
+		await scheduleApiCall(() => clerk.users.banUser(createdUser.id));
 	}
 
 	return createdUser;
@@ -321,7 +347,7 @@ async function createUser(
  * @param total - Total number of users being processed (for progress display)
  * @param dateTime - Timestamp for log file naming
  * @param skipPasswordRequirement - Whether to skip password requirement
- * @param limit - Shared p-limit instance for rate limiting all API calls
+ * @param scheduleApiCall - Shared scheduler for rate limiting all API calls
  * @param retryCount - Current retry attempt count (default 0)
  * @returns A promise that resolves when the user is processed
  */
@@ -330,7 +356,7 @@ async function processUserToClerk(
 	total: number,
 	dateTime: string,
 	skipPasswordRequirement: boolean,
-	limit: ReturnType<typeof pLimit>,
+	scheduleApiCall: ApiScheduler,
 	retryCount: number = 0
 ) {
 	try {
@@ -344,7 +370,7 @@ async function processUserToClerk(
 		const createdUser = await createUser(
 			parsedUserData.data,
 			skipPasswordRequirement,
-			limit,
+			scheduleApiCall,
 			dateTime
 		);
 
@@ -404,7 +430,7 @@ async function processUserToClerk(
 					total,
 					dateTime,
 					skipPasswordRequirement,
-					limit,
+					scheduleApiCall,
 					retryCount + 1
 				);
 			}
@@ -549,15 +575,21 @@ export async function importUsers(
 	const total = users.length;
 	s.message(`Migrating users: [0/${total}]`);
 
-	// Set up concurrency limiter based on rate limit
-	// This limiter is shared across ALL API calls (user creation, emails, phones)
-	const limit = pLimit(env.CONCURRENCY_LIMIT);
+	const scheduleApiCall = createApiScheduler(
+		env.CONCURRENCY_LIMIT,
+		env.RATE_LIMIT
+	);
 
 	// Process all users concurrently
-	// Note: We don't wrap processUserToClerk with limit() here because
-	// individual API calls inside createUser are rate-limited instead
+	// Individual API calls inside createUser are scheduled instead of whole users.
 	const promises = users.map((user) =>
-		processUserToClerk(user, total, dateTime, skipPasswordRequirement, limit)
+		processUserToClerk(
+			user,
+			total,
+			dateTime,
+			skipPasswordRequirement,
+			scheduleApiCall
+		)
 	);
 
 	await Promise.all(promises);
