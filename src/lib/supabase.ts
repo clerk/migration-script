@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 // Maps Supabase provider keys to human-readable labels
 export const OAUTH_PROVIDER_LABELS: Record<string, string> = {
@@ -33,6 +34,100 @@ export const IGNORED_PROVIDERS = new Set(['email', 'phone', 'anonymous_users']);
 interface SupabaseAuthSettings {
 	external?: Record<string, boolean>;
 }
+
+const parseJsonValue = (value: string): unknown => {
+	try {
+		return JSON.parse(value);
+	} catch {
+		return value;
+	}
+};
+
+const readExportRows = (filePath: string): Record<string, unknown>[] => {
+	const content = fs.readFileSync(filePath, 'utf-8');
+	if (path.extname(filePath).toLowerCase() === '.csv') {
+		return parseCsvRows(content);
+	}
+
+	return JSON.parse(content) as Record<string, unknown>[];
+};
+
+const parseCsvLine = (line: string): string[] => {
+	const values: string[] = [];
+	let currentValue = '';
+	let inQuotes = false;
+
+	for (let i = 0; i < line.length; i++) {
+		const character = line[i];
+		const nextCharacter = line[i + 1];
+
+		if (character === '"' && inQuotes && nextCharacter === '"') {
+			currentValue += '"';
+			i++;
+			continue;
+		}
+
+		if (character === '"') {
+			inQuotes = !inQuotes;
+			continue;
+		}
+
+		if (character === ',' && !inQuotes) {
+			values.push(currentValue.trim());
+			currentValue = '';
+			continue;
+		}
+
+		currentValue += character;
+	}
+
+	values.push(currentValue.trim());
+	return values;
+};
+
+const parseCsvRows = (content: string): Record<string, unknown>[] => {
+	const lines = content.split(/\r?\n/).filter((line) => line.trim());
+	const headers = parseCsvLine(lines[0] ?? '');
+
+	return lines.slice(1).map((line) => {
+		const values = parseCsvLine(line);
+		return Object.fromEntries(
+			headers.map((header, index) => [header, values[index] ?? ''])
+		);
+	});
+};
+
+const getProviders = (user: Record<string, unknown>): string[] => {
+	const rawAppMetaData = user.raw_app_meta_data;
+	const appMeta =
+		typeof rawAppMetaData === 'string'
+			? parseJsonValue(rawAppMetaData)
+			: rawAppMetaData;
+
+	if (!appMeta || typeof appMeta !== 'object' || Array.isArray(appMeta)) {
+		return [];
+	}
+
+	const providers = (appMeta as Record<string, unknown>).providers;
+	if (Array.isArray(providers)) {
+		return providers.map((provider) => String(provider).trim()).filter(Boolean);
+	}
+	if (typeof providers === 'string') {
+		const parsedProviders = parseJsonValue(providers);
+		if (Array.isArray(parsedProviders)) {
+			return parsedProviders
+				.map((provider) => String(provider).trim())
+				.filter(Boolean);
+		}
+
+		return providers
+			.split(/[,|]/)
+			.map((provider) => provider.trim())
+			.filter(Boolean);
+	}
+
+	return [];
+};
 
 /**
  * Fetches the Supabase project's auth settings to determine which OAuth providers are enabled.
@@ -83,19 +178,11 @@ export async function fetchSupabaseProviders(
  */
 export function analyzeUserProviders(filePath: string): Record<string, number> {
 	try {
-		const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<
-			string,
-			unknown
-		>[];
+		const raw = readExportRows(filePath);
 		const counts: Record<string, number> = {};
 
 		for (const user of raw) {
-			const appMeta = user.raw_app_meta_data as
-				| Record<string, unknown>
-				| undefined;
-			if (!appMeta?.providers) continue;
-
-			const providers = appMeta.providers as string[];
+			const providers = getProviders(user);
 			for (const provider of providers) {
 				counts[provider] = (counts[provider] || 0) + 1;
 			}
@@ -127,21 +214,15 @@ export function findUsersWithDisabledProviders(
 		return { excludedIds: new Set(), exclusionsByProvider: {} };
 
 	try {
-		const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<
-			string,
-			unknown
-		>[];
+		const raw = readExportRows(filePath);
 		const excludedIds = new Set<string>();
 		const exclusionsByProvider: Record<string, number> = {};
 		const disabledSet = new Set(disabledProviders);
 
 		for (const user of raw) {
-			const appMeta = user.raw_app_meta_data as
-				| Record<string, unknown>
-				| undefined;
-			if (!appMeta?.providers) continue;
+			const providers = getProviders(user);
+			if (providers.length === 0) continue;
 
-			const providers = appMeta.providers as string[];
 			const hasSupportedProvider = providers.some(
 				(p) => IGNORED_PROVIDERS.has(p) || !disabledSet.has(p)
 			);

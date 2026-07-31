@@ -621,6 +621,42 @@ describe('analyzeUserProviders', () => {
 
 		expect(result).toEqual({ email: 1 });
 	});
+
+	test('counts providers when raw_app_meta_data is a JSON string', () => {
+		const mockData = [
+			{ raw_app_meta_data: '{"providers":["email","discord"]}' },
+			{ raw_app_meta_data: '{"providers":"google|github"}' },
+		];
+		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockData));
+
+		const result = analyzeUserProviders('test.json');
+
+		expect(result).toEqual({
+			email: 1,
+			discord: 1,
+			google: 1,
+			github: 1,
+		});
+	});
+
+	test('counts providers from CSV exports', () => {
+		vi.mocked(fs.readFileSync).mockReturnValue(
+			[
+				'id,raw_app_meta_data',
+				'user-1,"{""providers"":[""email"",""discord""]}"',
+				'user-2,"{""providers"":""google|github""}"',
+			].join('\n')
+		);
+
+		const result = analyzeUserProviders('test.csv');
+
+		expect(result).toEqual({
+			email: 1,
+			discord: 1,
+			google: 1,
+			github: 1,
+		});
+	});
 });
 
 // ============================================================================
@@ -695,6 +731,23 @@ describe('findUsersWithDisabledProviders', () => {
 		const mockData = [
 			{ id: 'user-1', email: 'test@example.com' },
 			{ id: 'user-2', raw_app_meta_data: { providers: ['discord'] } },
+		];
+		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockData));
+
+		const result = findUsersWithDisabledProviders('test.json', ['discord']);
+
+		expect(result.excludedIds).toEqual(new Set(['user-2']));
+		expect(result.exclusionsByProvider).toEqual({ discord: 1 });
+	});
+
+	test('excludes users when raw_app_meta_data is a JSON string', () => {
+		const mockData = [
+			{ id: 'user-1', raw_app_meta_data: '{"providers":["email"]}' },
+			{ id: 'user-2', raw_app_meta_data: '{"providers":["discord"]}' },
+			{
+				id: 'user-3',
+				raw_app_meta_data: '{"providers":["email","discord"]}',
+			},
 		];
 		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockData));
 
