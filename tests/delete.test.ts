@@ -3,6 +3,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 // Create mock functions at module level
 const mockGetUserList = vi.fn();
 const mockDeleteUser = vi.fn();
+const mockSpinner = vi.hoisted(() => ({
+	start: vi.fn(),
+	stop: vi.fn(),
+	message: vi.fn(),
+}));
 
 // Mock @clerk/backend before importing the module
 vi.mock('@clerk/backend', () => ({
@@ -18,11 +23,7 @@ vi.mock('@clerk/backend', () => ({
 vi.mock('@clack/prompts', () => ({
 	intro: vi.fn(),
 	outro: vi.fn(),
-	spinner: vi.fn(() => ({
-		start: vi.fn(),
-		stop: vi.fn(),
-		message: vi.fn(),
-	})),
+	spinner: vi.fn(() => mockSpinner),
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),
@@ -418,6 +419,24 @@ describe('delete-users', () => {
 
 			expect(mockDeleteUser).toHaveBeenCalledTimes(4);
 			expect(mockDeleteLogger).toHaveBeenCalledTimes(4); // All 4 users logged (2 success + 2 error)
+		});
+
+		test('resets counters between delete runs', async () => {
+			mockDeleteUser.mockResolvedValue({});
+
+			await deleteUsers(
+				[
+					{ id: 'user_1', firstName: 'John' },
+					{ id: 'user_2', firstName: 'Jane' },
+				] as any[],
+				dateTime
+			);
+			await deleteUsers(
+				[{ id: 'user_3', firstName: 'Bob' }] as any[],
+				dateTime
+			);
+
+			expect(mockSpinner.stop).toHaveBeenLastCalledWith('Deleted 1 users');
 		});
 	});
 

@@ -403,7 +403,9 @@ const deleteUser = async (
  * @returns A promise that resolves when all users are processed
  */
 export const deleteUsers = async (users: User[], dateTime: string) => {
-	// Reset error counts
+	total = users.length;
+	count = 0;
+	failed = 0;
 	errorCounts.clear();
 
 	s.message(`Deleting users: [0/${total}]`);
