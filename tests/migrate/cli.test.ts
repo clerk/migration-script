@@ -426,7 +426,7 @@ describe('analyzeFields', () => {
 		expect(result.identifiers.hasAnyIdentifier).toBe(3);
 	});
 
-	test('does not count unverified identifiers toward hasAnyIdentifier', () => {
+	test('counts unverified identifiers toward hasAnyIdentifier', () => {
 		const users = [
 			{ userId: '1', unverifiedEmailAddresses: ['test@example.com'] },
 			{ userId: '2', unverifiedPhoneNumbers: ['+1234567890'] },
@@ -434,7 +434,7 @@ describe('analyzeFields', () => {
 
 		const result = analyzeFields(users);
 
-		expect(result.identifiers.hasAnyIdentifier).toBe(0);
+		expect(result.identifiers.hasAnyIdentifier).toBe(2);
 	});
 
 	test('identifies fields present on all users', () => {
@@ -1772,5 +1772,39 @@ describe('loadRawUsers', () => {
 			customField: 'custom value',
 			email: ['john@example.com'],
 		});
+	});
+
+	test('normalizes arrays, metadata, booleans, numbers, and dates', async () => {
+		const mockJsonData = [
+			{
+				id: 'user_123',
+				primary_email_address: 'primary@example.com',
+				verified_email_addresses: 'primary@example.com|other@example.com',
+				public_metadata: '{"role":"admin"}',
+				unsafe_metadata: '{"newsletter":true}',
+				backup_codes_enabled: 'true',
+				backup_codes: '["code1","code2"]',
+				banned: '0',
+				createOrganizationsLimit: '3',
+				createdAt: '2025-01-15T10:30:00.000Z',
+			},
+		];
+
+		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockJsonData));
+
+		const result = await loadRawUsers('users.json', 'clerk');
+
+		expect(result[0]).toEqual(
+			expect.objectContaining({
+				email: ['primary@example.com', 'other@example.com'],
+				publicMetadata: { role: 'admin' },
+				unsafeMetadata: { newsletter: true },
+				backupCodesEnabled: true,
+				backupCodes: ['code1', 'code2'],
+				banned: false,
+				createOrganizationsLimit: 3,
+				createdAt: '2025-01-15T10:30:00.000Z',
+			})
+		);
 	});
 });

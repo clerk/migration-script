@@ -38,12 +38,172 @@ const getTransformer = (key: string): TransformerMapUnion => {
 const parseDelimitedStrings = (field: unknown): string[] => {
 	if (Array.isArray(field)) return field as string[];
 	if (typeof field === 'string' && field) {
+		const parsedValue = parseJsonValue(field);
+		if (Array.isArray(parsedValue)) {
+			return parsedValue.map((value) => String(value).trim()).filter(Boolean);
+		}
+
 		return field
 			.split(/[,|]/)
 			.map((value: string) => value.trim())
 			.filter(Boolean);
 	}
 	return [];
+};
+
+const parseJsonValue = (value: string): unknown => {
+	const trimmedValue = value.trim();
+	if (!trimmedValue) return value;
+	if (!['[', '{', '"'].includes(trimmedValue[0])) return value;
+
+	try {
+		return JSON.parse(trimmedValue);
+	} catch {
+		return value;
+	}
+};
+
+const normalizeStringArrayField = (value: unknown): unknown => {
+	if (Array.isArray(value)) {
+		return value.map((item) => String(item).trim()).filter(Boolean);
+	}
+
+	if (typeof value !== 'string') return value;
+
+	const trimmedValue = value.trim();
+	if (!trimmedValue) return undefined;
+
+	const parsedValue = parseJsonValue(trimmedValue);
+	if (Array.isArray(parsedValue)) {
+		return parsedValue.map((item) => String(item).trim()).filter(Boolean);
+	}
+
+	if (typeof parsedValue === 'string') {
+		const parsedString = parsedValue.trim();
+		if (parsedString.includes(',') || parsedString.includes('|')) {
+			return parsedString
+				.split(/[,|]/)
+				.map((item) => item.trim())
+				.filter(Boolean);
+		}
+		return parsedString;
+	}
+
+	return parsedValue;
+};
+
+const normalizeBooleanField = (value: unknown): unknown => {
+	if (typeof value === 'boolean') return value;
+	if (typeof value === 'number') {
+		if (value === 1) return true;
+		if (value === 0) return false;
+		return value;
+	}
+	if (typeof value !== 'string') return value;
+
+	const normalizedValue = value.trim().toLowerCase();
+	if (['true', '1', 'yes', 'y'].includes(normalizedValue)) return true;
+	if (['false', '0', 'no', 'n'].includes(normalizedValue)) return false;
+	return value;
+};
+
+const normalizeNumberField = (value: unknown): unknown => {
+	if (typeof value === 'number') return value;
+	if (typeof value !== 'string') return value;
+
+	const trimmedValue = value.trim();
+	if (!trimmedValue) return undefined;
+
+	const parsedValue = Number(trimmedValue);
+	return Number.isFinite(parsedValue) ? parsedValue : value;
+};
+
+const normalizeMetadataField = (value: unknown): unknown => {
+	if (value === undefined || value === null || value === '') return undefined;
+	if (typeof value !== 'string') return value;
+
+	const parsedValue = parseJsonValue(value);
+	if (typeof parsedValue === 'string') return value;
+	return parsedValue;
+};
+
+const normalizeDateField = (value: unknown): unknown => {
+	if (value instanceof Date) return value.toISOString();
+	if (typeof value === 'number') {
+		const date = new Date(value);
+		return Number.isNaN(date.getTime()) ? value : date.toISOString();
+	}
+	if (typeof value !== 'string') return value;
+
+	const trimmedValue = value.trim();
+	if (!trimmedValue) return undefined;
+
+	const date = new Date(trimmedValue);
+	return Number.isNaN(date.getTime()) ? value : date.toISOString();
+};
+
+const normalizeUserData = (
+	user: Record<string, unknown>
+): Record<string, unknown> => {
+	const normalizedUser = { ...user };
+
+	for (const field of [
+		'email',
+		'emailAddresses',
+		'unverifiedEmailAddresses',
+		'phone',
+		'phoneNumbers',
+		'unverifiedPhoneNumbers',
+		'backupCodes',
+	]) {
+		const normalizedValue = normalizeStringArrayField(normalizedUser[field]);
+		if (normalizedValue === undefined) {
+			delete normalizedUser[field];
+		} else {
+			normalizedUser[field] = normalizedValue;
+		}
+	}
+
+	for (const field of [
+		'backupCodesEnabled',
+		'banned',
+		'bypassClientTrust',
+		'createOrganizationEnabled',
+		'deleteSelfEnabled',
+		'skipLegalChecks',
+		'skipPasswordChecks',
+	]) {
+		normalizedUser[field] = normalizeBooleanField(normalizedUser[field]);
+	}
+
+	const organizationLimit = normalizeNumberField(
+		normalizedUser.createOrganizationsLimit
+	);
+	if (organizationLimit === undefined) {
+		delete normalizedUser.createOrganizationsLimit;
+	} else {
+		normalizedUser.createOrganizationsLimit = organizationLimit;
+	}
+
+	for (const field of ['unsafeMetadata', 'publicMetadata', 'privateMetadata']) {
+		const normalizedValue = normalizeMetadataField(normalizedUser[field]);
+		if (normalizedValue === undefined) {
+			delete normalizedUser[field];
+		} else {
+			normalizedUser[field] = normalizedValue;
+		}
+	}
+
+	for (const field of ['createdAt', 'legalAcceptedAt']) {
+		const normalizedValue = normalizeDateField(normalizedUser[field]);
+		if (normalizedValue === undefined) {
+			delete normalizedUser[field];
+		} else {
+			normalizedUser[field] = normalizedValue;
+		}
+	}
+
+	return normalizedUser;
 };
 
 const consolidateClerkIdentifiers = (
@@ -175,7 +335,7 @@ export function transformUsers(
 			transformer.postTransform(transformedUser);
 		}
 
-		transformedData.push(transformedUser);
+		transformedData.push(normalizeUserData(transformedUser));
 	}
 
 	if (options.validate === false) {
@@ -228,7 +388,9 @@ export function validateUsersForImport(
 	key: TransformerMapKeys,
 	dateTime = getDateTimeStamp()
 ): { validationFailed: number; logFile: string } {
-	const usersWithDefaultFields = addDefaultFields(users, key);
+	const usersWithDefaultFields = addDefaultFields(users, key).map(
+		normalizeUserData
+	);
 	const validationResult = validatePreparedUsers(
 		usersWithDefaultFields,
 		dateTime

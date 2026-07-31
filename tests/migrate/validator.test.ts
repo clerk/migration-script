@@ -64,6 +64,22 @@ describe('userSchema', () => {
 			expect(result.success).toBe(true);
 		});
 
+		test('passes with unverifiedEmailAddresses only', () => {
+			const result = userSchema.safeParse({
+				userId: 'user_123',
+				unverifiedEmailAddresses: 'test@example.com',
+			});
+			expect(result.success).toBe(true);
+		});
+
+		test('passes with unverifiedPhoneNumbers only', () => {
+			const result = userSchema.safeParse({
+				userId: 'user_123',
+				unverifiedPhoneNumbers: '+1234567890',
+			});
+			expect(result.success).toBe(true);
+		});
+
 		test('fails without email or phone', () => {
 			const result = userSchema.safeParse({
 				userId: 'user_123',
@@ -222,6 +238,53 @@ describe('userSchema', () => {
 				email: 'test@example.com',
 				banned: 'true',
 			});
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe('metadata fields', () => {
+		test('passes with metadata objects', () => {
+			const result = userSchema.safeParse({
+				userId: 'user_123',
+				email: 'test@example.com',
+				publicMetadata: { role: 'admin' },
+				privateMetadata: { internalId: 123 },
+				unsafeMetadata: { newsletter: true },
+			});
+
+			expect(result.success).toBe(true);
+		});
+
+		test('fails with metadata strings', () => {
+			const result = userSchema.safeParse({
+				userId: 'user_123',
+				email: 'test@example.com',
+				publicMetadata: '{"role":"admin"}',
+			});
+
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe('date fields', () => {
+		test('passes with valid date strings', () => {
+			const result = userSchema.safeParse({
+				userId: 'user_123',
+				email: 'test@example.com',
+				createdAt: '2025-01-15T10:30:00.000Z',
+				legalAcceptedAt: '2025-01-16T10:30:00.000Z',
+			});
+
+			expect(result.success).toBe(true);
+		});
+
+		test('fails with invalid date strings', () => {
+			const result = userSchema.safeParse({
+				userId: 'user_123',
+				email: 'test@example.com',
+				createdAt: 'not-a-date',
+			});
+
 			expect(result.success).toBe(false);
 		});
 	});

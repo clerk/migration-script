@@ -93,7 +93,13 @@ export function analyzeFields(users: Record<string, unknown>[]): FieldAnalysis {
 		if (hasUsername) identifiers.username++;
 
 		// Check if user has at least one valid identifier
-		if (hasVerifiedEmail || hasVerifiedPhone || hasUsername) {
+		if (
+			hasVerifiedEmail ||
+			hasUnverifiedEmail ||
+			hasVerifiedPhone ||
+			hasUnverifiedPhone ||
+			hasUsername
+		) {
 			identifiers.hasAnyIdentifier++;
 		}
 	}
