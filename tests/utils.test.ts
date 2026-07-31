@@ -5,8 +5,9 @@ import {
 	getDateTimeStamp,
 	getFileType,
 	getRetryDelay,
+	normalizeErrorMessage,
 	tryCatch,
-} from '../src/utils';
+} from '../src/lib';
 import path from 'path';
 
 describe('getDateTimeStamp', () => {
@@ -43,11 +44,30 @@ describe('createImportFilePath', () => {
 		expect(result).toContain('users.json');
 		expect(path.isAbsolute(result)).toBe(true);
 	});
+
+	test('keeps absolute paths outside samples unchanged', () => {
+		const absolutePath = path.join(path.sep, 'tmp', 'users.json');
+
+		expect(createImportFilePath(absolutePath)).toBe(absolutePath);
+	});
+
+	test('keeps project-rooted absolute paths unchanged', () => {
+		const absolutePath = path.join(process.cwd(), 'samples', 'clerk.json');
+
+		expect(createImportFilePath(absolutePath)).toBe(absolutePath);
+	});
 });
 
 describe('checkIfFileExists', () => {
 	test('returns true for existing file', () => {
 		const result = checkIfFileExists('/samples/clerk.json');
+		expect(result).toBe(true);
+	});
+
+	test('returns true for existing absolute file', () => {
+		const result = checkIfFileExists(
+			path.join(process.cwd(), 'samples', 'clerk.json')
+		);
 		expect(result).toBe(true);
 	});
 
@@ -65,6 +85,13 @@ describe('checkIfFileExists', () => {
 describe('getFileType', () => {
 	test('returns application/json for .json files', () => {
 		const result = getFileType('/samples/clerk.json');
+		expect(result).toBe('application/json');
+	});
+
+	test('returns application/json for absolute .json files', () => {
+		const result = getFileType(
+			path.join(process.cwd(), 'samples', 'clerk.json')
+		);
 		expect(result).toBe('application/json');
 	});
 
@@ -147,5 +174,23 @@ describe('getRetryDelay', () => {
 		const result = getRetryDelay(undefined, customDefault);
 		expect(result.delayMs).toBe(5000);
 		expect(result.delaySeconds).toBe(5);
+	});
+});
+
+describe('normalizeErrorMessage', () => {
+	test('normalizes multiple field arrays by sorting field names', () => {
+		const result = normalizeErrorMessage(
+			'["username" "email"] must have ["last_name" "first_name"] filled'
+		);
+
+		expect(result).toBe(
+			'["email" "username"] must have ["first_name" "last_name"] filled'
+		);
+	});
+
+	test('leaves bracket-heavy input without a closing bracket unchanged', () => {
+		const input = `${'[\\'.repeat(10_000)} missing closing bracket`;
+
+		expect(normalizeErrorMessage(input)).toBe(input);
 	});
 });

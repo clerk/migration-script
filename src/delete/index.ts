@@ -10,11 +10,12 @@ import {
 	getFileType,
 	getRetryDelay,
 	tryCatch,
-} from '../utils';
+} from '../lib';
+import { normalizeErrorMessage } from '../lib';
+import { loadSettings } from '../lib/settings';
 import { env, MAX_RETRIES, RETRY_DELAY_MS } from '../envs-constants';
 import { closeAllStreams, deleteErrorLogger, deleteLogger } from '../logger';
 import * as fs from 'fs';
-import * as path from 'path';
 import csvParser from 'csv-parser';
 import pLimit from 'p-limit';
 import type { SettingsResult } from '../types';
@@ -33,9 +34,8 @@ let failed = 0;
  * @throws Exits the process if .settings file is not found or missing the file property
  */
 export const readSettings = (): SettingsResult => {
-	const settingsPath = path.join(process.cwd(), '.settings');
-
-	if (!fs.existsSync(settingsPath)) {
+	const settings = loadSettings();
+	if (!settings.file) {
 		p.log.error(
 			color.red(
 				'No migration has been performed yet. Unable to find .settings file with migration source.'
@@ -43,21 +43,6 @@ export const readSettings = (): SettingsResult => {
 		);
 		process.exit(1);
 	}
-
-	const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8')) as {
-		file?: string;
-		key?: string;
-	};
-
-	if (!settings.file) {
-		p.log.error(
-			color.red(
-				'No migration source found in .settings file. Please perform a migration first.'
-			)
-		);
-		process.exit(1);
-	}
-
 	return { file: settings.file, key: settings.key };
 };
 
@@ -157,11 +142,9 @@ export const readMigrationFile = async (
 	if (type === 'text/csv') {
 		// Firebase CSV files don't have headers, so we need to provide them
 		const isFirebase = transformerKey === 'firebase';
-		const parserOptions: csvParser.Options = { skipComments: true };
-
-		if (isFirebase) {
-			parserOptions.headers = FIREBASE_CSV_HEADERS;
-		}
+		const parserOptions: csvParser.Options = isFirebase
+			? { skipComments: true, headers: FIREBASE_CSV_HEADERS }
+			: { skipComments: true };
 
 		return new Promise((resolve, reject) => {
 			fs.createReadStream(fullPath)
@@ -292,35 +275,6 @@ export const findIntersection = (
 const errorCounts = new Map<string, number>();
 
 /**
- * Normalizes error messages by sorting field arrays to group similar errors
- *
- * Example: Converts both:
- * - ["first_name" "last_name"] data doesn't match...
- * - ["last_name" "first_name"] data doesn't match...
- * into: ["first_name" "last_name"] data doesn't match...
- *
- * @param errorMessage - The original error message
- * @returns The normalized error message with sorted field arrays
- */
-export function normalizeErrorMessage(errorMessage: string): string {
-	// Match array-like patterns in error messages: ["field1" "field2"]
-	const arrayPattern = /\[([^\]]+)\]/g;
-
-	return errorMessage.replace(arrayPattern, (_match, fields: string) => {
-		// Split by spaces and quotes, filter out empty strings
-		const fieldNames = fields
-			.split(/["'\s]+/)
-			.filter((f: string) => f.trim().length > 0);
-
-		// Sort field names alphabetically
-		fieldNames.sort();
-
-		// Reconstruct the array notation
-		return `[${fieldNames.map((f: string) => `"${f}"`).join(' ')}]`;
-	});
-}
-
-/**
  * Deletes a single user from Clerk with retry logic for rate limits
  *
  * @param user - The Clerk user to delete
@@ -449,7 +403,9 @@ const deleteUser = async (
  * @returns A promise that resolves when all users are processed
  */
 export const deleteUsers = async (users: User[], dateTime: string) => {
-	// Reset error counts
+	total = users.length;
+	count = 0;
+	failed = 0;
 	errorCounts.clear();
 
 	s.message(`Deleting users: [0/${total}]`);

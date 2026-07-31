@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 // Mock @clerk/backend before importing the module
 const mockCreateUser = vi.fn();
+const mockUpdateUser = vi.fn();
+const mockBanUser = vi.fn();
 const mockCreateEmailAddress = vi.fn();
 const mockCreatePhoneNumber = vi.fn();
 vi.mock('@clerk/backend', () => ({
 	createClerkClient: vi.fn(() => ({
 		users: {
 			createUser: mockCreateUser,
+			updateUser: mockUpdateUser,
+			banUser: mockBanUser,
 		},
 		emailAddresses: {
 			createEmailAddress: mockCreateEmailAddress,
@@ -51,27 +55,32 @@ vi.mock('picocolors', () => ({
 }));
 
 // Mock utils for testing
-vi.mock('../../src/utils', () => ({
-	getDateTimeStamp: vi.fn(() => '2024-01-01T12:00:00'),
-	tryCatch: async (promise: Promise<any>) => {
-		try {
-			const data = await promise;
-			return [data, null];
-		} catch (throwable) {
-			if (throwable instanceof Error) return [null, throwable];
-			throw throwable;
-		}
-	},
-	getRetryDelay: (
-		retryAfterSeconds: number | undefined,
-		_defaultDelayMs: number
-	) => {
-		// Use a short delay for tests to avoid timeouts
-		const delayMs = retryAfterSeconds ? retryAfterSeconds * 1000 : 10; // 10ms instead of _defaultDelayMs
-		const delaySeconds = retryAfterSeconds || delayMs / 1000;
-		return { delayMs, delaySeconds };
-	},
-}));
+vi.mock('../../src/lib', async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+	const actual = (await importOriginal()) as Record<string, unknown>;
+	return {
+		...actual,
+		getDateTimeStamp: vi.fn(() => '2024-01-01T12:00:00'),
+		tryCatch: async (promise: Promise<any>) => {
+			try {
+				const data = await promise;
+				return [data, null];
+			} catch (throwable) {
+				if (throwable instanceof Error) return [null, throwable];
+				throw throwable;
+			}
+		},
+		getRetryDelay: (
+			retryAfterSeconds: number | undefined,
+			_defaultDelayMs: number
+		) => {
+			// Use a short delay for tests to avoid timeouts
+			const delayMs = retryAfterSeconds ? retryAfterSeconds * 1000 : 10; // 10ms instead of _defaultDelayMs
+			const delaySeconds = retryAfterSeconds || delayMs / 1000;
+			return { delayMs, delaySeconds };
+		},
+	};
+});
 
 // Mock logger module
 vi.mock('../../src/logger', () => ({
@@ -84,7 +93,7 @@ vi.mock('../../src/logger', () => ({
 vi.mock('../../src/envs-constants', () => ({
 	env: {
 		CLERK_SECRET_KEY: 'test_secret_key',
-		RATE_LIMIT: 10,
+		RATE_LIMIT: 1000,
 		CONCURRENCY_LIMIT: 5, // Higher for faster tests
 	},
 	MAX_RETRIES: 5,
@@ -93,14 +102,46 @@ vi.mock('../../src/envs-constants', () => ({
 
 // Import after mocks are set up
 import {
+	createApiScheduler,
 	importUsers,
-	normalizeErrorMessage,
 } from '../../src/migrate/import-users';
+import { normalizeErrorMessage } from '../../src/lib';
 import * as logger from '../../src/logger';
 
 describe('importUsers', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	describe('createApiScheduler', () => {
+		test('spaces API calls according to the rate limit', async () => {
+			vi.useFakeTimers();
+			vi.setSystemTime(0);
+
+			const scheduleApiCall = createApiScheduler(2, 2);
+			const callTimes: number[] = [];
+
+			const firstCall = scheduleApiCall(() => {
+				callTimes.push(Date.now());
+				return Promise.resolve();
+			});
+			const secondCall = scheduleApiCall(() => {
+				callTimes.push(Date.now());
+				return Promise.resolve();
+			});
+
+			await vi.advanceTimersByTimeAsync(0);
+			await firstCall;
+
+			expect(callTimes).toEqual([0]);
+
+			await vi.advanceTimersByTimeAsync(500);
+			await secondCall;
+
+			expect(callTimes).toEqual([0, 500]);
+
+			vi.useRealTimers();
+		});
 	});
 
 	describe('createUser API calls', () => {
@@ -130,8 +171,6 @@ describe('importUsers', () => {
 				passwordDigest: '$2a$10$hashedpassword',
 				passwordHasher: 'bcrypt',
 				username: 'johndoe',
-				phoneNumber: undefined,
-				totpSecret: undefined,
 			});
 		});
 
@@ -156,9 +195,6 @@ describe('importUsers', () => {
 				firstName: 'Jane',
 				lastName: 'Smith',
 				skipPasswordRequirement: true,
-				username: undefined,
-				phoneNumber: undefined,
-				totpSecret: undefined,
 			});
 		});
 
@@ -214,6 +250,105 @@ describe('importUsers', () => {
 					totpSecret: 'JBSWY3DPEHPK3PXP',
 				})
 			);
+		});
+
+		test('converts supported dates and updates post-create fields', async () => {
+			mockCreateUser.mockResolvedValue({ id: 'user_created' });
+			mockUpdateUser.mockResolvedValue({ id: 'user_created' });
+
+			const users = [
+				{
+					userId: 'user_settings',
+					email: ['settings@example.com'],
+					createdAt: '2025-01-15T10:30:00.000Z',
+					legalAcceptedAt: '2025-01-16T10:30:00.000Z',
+					createOrganizationEnabled: true,
+					createOrganizationsLimit: 3,
+					deleteSelfEnabled: false,
+				},
+			];
+
+			await importUsers(users);
+
+			expect(mockCreateUser).toHaveBeenCalledWith(
+				expect.objectContaining({
+					createdAt: new Date('2025-01-15T10:30:00.000Z'),
+					legalAcceptedAt: new Date('2025-01-16T10:30:00.000Z'),
+				})
+			);
+			expect(mockCreateUser).not.toHaveBeenCalledWith(
+				expect.objectContaining({
+					createOrganizationEnabled: true,
+					createOrganizationsLimit: 3,
+					deleteSelfEnabled: false,
+				})
+			);
+			expect(mockUpdateUser).toHaveBeenCalledWith('user_created', {
+				createOrganizationEnabled: true,
+				createOrganizationsLimit: 3,
+				deleteSelfEnabled: false,
+			});
+		});
+
+		test('bans users after creation when requested', async () => {
+			mockCreateUser.mockResolvedValue({ id: 'user_created' });
+			mockBanUser.mockResolvedValue({ id: 'user_created' });
+
+			const users = [
+				{
+					userId: 'user_banned',
+					email: ['banned@example.com'],
+					banned: true,
+				},
+			];
+
+			await importUsers(users);
+
+			expect(mockCreateUser).not.toHaveBeenCalledWith(
+				expect.objectContaining({ banned: true })
+			);
+			expect(mockBanUser).toHaveBeenCalledWith('user_created');
+		});
+
+		test('adds verified and unverified additional identifiers with flags', async () => {
+			mockCreateUser.mockResolvedValue({ id: 'user_created' });
+
+			const users = [
+				{
+					userId: 'user_identifiers',
+					email: ['primary@example.com', 'verified@example.com'],
+					unverifiedEmailAddresses: ['unverified@example.com'],
+					phone: ['+10000000000', '+12222222222'],
+					unverifiedPhoneNumbers: ['+13333333333'],
+				},
+			];
+
+			await importUsers(users);
+
+			expect(mockCreateEmailAddress).toHaveBeenCalledWith({
+				userId: 'user_created',
+				emailAddress: 'verified@example.com',
+				primary: false,
+				verified: true,
+			});
+			expect(mockCreateEmailAddress).toHaveBeenCalledWith({
+				userId: 'user_created',
+				emailAddress: 'unverified@example.com',
+				primary: false,
+				verified: false,
+			});
+			expect(mockCreatePhoneNumber).toHaveBeenCalledWith({
+				userId: 'user_created',
+				phoneNumber: '+12222222222',
+				primary: false,
+				verified: true,
+			});
+			expect(mockCreatePhoneNumber).toHaveBeenCalledWith({
+				userId: 'user_created',
+				phoneNumber: '+13333333333',
+				primary: false,
+				verified: false,
+			});
 		});
 	});
 
@@ -439,6 +574,7 @@ describe('importUsers edge cases', () => {
 			userId: 'user_full_created',
 			emailAddress: 'secondary@example.com',
 			primary: false,
+			verified: true,
 		});
 	});
 
@@ -472,11 +608,13 @@ describe('importUsers edge cases', () => {
 			userId: 'user_multi_email',
 			emailAddress: 'second@example.com',
 			primary: false,
+			verified: true,
 		});
 		expect(mockCreateEmailAddress).toHaveBeenCalledWith({
 			userId: 'user_multi_email',
 			emailAddress: 'third@example.com',
 			primary: false,
+			verified: true,
 		});
 	});
 
@@ -523,11 +661,13 @@ describe('importUsers edge cases', () => {
 			userId: 'user_multi_phone',
 			phoneNumber: '+2222222222',
 			primary: false,
+			verified: true,
 		});
 		expect(mockCreatePhoneNumber).toHaveBeenCalledWith({
 			userId: 'user_multi_phone',
 			phoneNumber: '+3333333333',
 			primary: false,
+			verified: true,
 		});
 	});
 

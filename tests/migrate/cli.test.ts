@@ -1,18 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { displayCrossReference, loadRawUsers } from '../../src/migrate/cli';
+import { loadSettings, saveSettings } from '../../src/lib/settings';
+import { analyzeFields, hasValue, validateUsers } from '../../src/lib/analysis';
 import {
-	analyzeFields,
 	analyzeUserProviders,
-	detectInstanceType,
-	displayCrossReference,
 	findUsersWithDisabledProviders,
-	hasValue,
-	loadRawUsers,
-	loadSettings,
-	saveSettings,
-	validateUsers,
-} from '../../src/migrate/cli';
+} from '../../src/lib/supabase';
+import { detectInstanceType } from '../../src/lib/clerk';
 
 // Mock modules
 vi.mock('fs', async () => {
@@ -75,7 +71,7 @@ vi.mock('../../src/envs-constants', () => ({
 }));
 
 // Mock the utils module
-vi.mock('../../src/utils', async (importOriginal) => {
+vi.mock('../../src/lib', async (importOriginal) => {
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 	const actual = (await importOriginal()) as Record<string, unknown>;
 	return {
@@ -430,7 +426,7 @@ describe('analyzeFields', () => {
 		expect(result.identifiers.hasAnyIdentifier).toBe(3);
 	});
 
-	test('does not count unverified identifiers toward hasAnyIdentifier', () => {
+	test('counts unverified identifiers toward hasAnyIdentifier', () => {
 		const users = [
 			{ userId: '1', unverifiedEmailAddresses: ['test@example.com'] },
 			{ userId: '2', unverifiedPhoneNumbers: ['+1234567890'] },
@@ -438,7 +434,7 @@ describe('analyzeFields', () => {
 
 		const result = analyzeFields(users);
 
-		expect(result.identifiers.hasAnyIdentifier).toBe(0);
+		expect(result.identifiers.hasAnyIdentifier).toBe(2);
 	});
 
 	test('identifies fields present on all users', () => {
@@ -625,6 +621,42 @@ describe('analyzeUserProviders', () => {
 
 		expect(result).toEqual({ email: 1 });
 	});
+
+	test('counts providers when raw_app_meta_data is a JSON string', () => {
+		const mockData = [
+			{ raw_app_meta_data: '{"providers":["email","discord"]}' },
+			{ raw_app_meta_data: '{"providers":"google|github"}' },
+		];
+		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockData));
+
+		const result = analyzeUserProviders('test.json');
+
+		expect(result).toEqual({
+			email: 1,
+			discord: 1,
+			google: 1,
+			github: 1,
+		});
+	});
+
+	test('counts providers from CSV exports', () => {
+		vi.mocked(fs.readFileSync).mockReturnValue(
+			[
+				'id,raw_app_meta_data',
+				'user-1,"{""providers"":[""email"",""discord""]}"',
+				'user-2,"{""providers"":""google|github""}"',
+			].join('\n')
+		);
+
+		const result = analyzeUserProviders('test.csv');
+
+		expect(result).toEqual({
+			email: 1,
+			discord: 1,
+			google: 1,
+			github: 1,
+		});
+	});
 });
 
 // ============================================================================
@@ -699,6 +731,23 @@ describe('findUsersWithDisabledProviders', () => {
 		const mockData = [
 			{ id: 'user-1', email: 'test@example.com' },
 			{ id: 'user-2', raw_app_meta_data: { providers: ['discord'] } },
+		];
+		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockData));
+
+		const result = findUsersWithDisabledProviders('test.json', ['discord']);
+
+		expect(result.excludedIds).toEqual(new Set(['user-2']));
+		expect(result.exclusionsByProvider).toEqual({ discord: 1 });
+	});
+
+	test('excludes users when raw_app_meta_data is a JSON string', () => {
+		const mockData = [
+			{ id: 'user-1', raw_app_meta_data: '{"providers":["email"]}' },
+			{ id: 'user-2', raw_app_meta_data: '{"providers":["discord"]}' },
+			{
+				id: 'user-3',
+				raw_app_meta_data: '{"providers":["email","discord"]}',
+			},
 		];
 		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockData));
 
@@ -1553,13 +1602,13 @@ describe('loadRawUsers', () => {
 			userId: 'user_123',
 			firstName: 'John',
 			lastName: 'Doe',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[1]).toEqual({
 			userId: 'user_456',
 			firstName: 'Jane',
 			lastName: 'Smith',
-			email: 'jane@example.com',
+			email: ['jane@example.com'],
 		});
 	});
 
@@ -1580,7 +1629,7 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			firstName: 'John',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[0]).not.toHaveProperty('lastName');
 	});
@@ -1602,7 +1651,7 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			firstName: 'John',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[0]).not.toHaveProperty('publicMetadata');
 	});
@@ -1624,7 +1673,7 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			firstName: 'John',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[0]).not.toHaveProperty('lastName');
 	});
@@ -1653,6 +1702,7 @@ describe('loadRawUsers', () => {
 			userId: 'uuid-123',
 			email: 'john@example.com',
 			password: '$2a$10$hash',
+			passwordHasher: 'bcrypt',
 		});
 	});
 
@@ -1684,6 +1734,7 @@ describe('loadRawUsers', () => {
 			lastName: 'Doe',
 			phone: '+1234567890',
 			createdAt: '2025-01-15T10:30:00.000Z',
+			passwordHasher: 'bcrypt',
 		});
 	});
 
@@ -1772,7 +1823,41 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			customField: 'custom value',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
+	});
+
+	test('normalizes arrays, metadata, booleans, numbers, and dates', async () => {
+		const mockJsonData = [
+			{
+				id: 'user_123',
+				primary_email_address: 'primary@example.com',
+				verified_email_addresses: 'primary@example.com|other@example.com',
+				public_metadata: '{"role":"admin"}',
+				unsafe_metadata: '{"newsletter":true}',
+				backup_codes_enabled: 'true',
+				backup_codes: '["code1","code2"]',
+				banned: '0',
+				createOrganizationsLimit: '3',
+				createdAt: '2025-01-15T10:30:00.000Z',
+			},
+		];
+
+		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockJsonData));
+
+		const result = await loadRawUsers('users.json', 'clerk');
+
+		expect(result[0]).toEqual(
+			expect.objectContaining({
+				email: ['primary@example.com', 'other@example.com'],
+				publicMetadata: { role: 'admin' },
+				unsafeMetadata: { newsletter: true },
+				backupCodesEnabled: true,
+				backupCodes: ['code1', 'code2'],
+				banned: false,
+				createOrganizationsLimit: 3,
+				createdAt: '2025-01-15T10:30:00.000Z',
+			})
+		);
 	});
 });

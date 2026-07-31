@@ -1,6 +1,13 @@
 import * as z from 'zod';
 import { passwordHasherEnum } from '../types';
 
+const metadataSchema = z.record(z.string(), z.unknown());
+const dateStringSchema = z
+	.string()
+	.refine((value) => !Number.isNaN(new Date(value).getTime()), {
+		message: 'Expected a valid date string',
+	});
+
 // ============================================================================
 //
 // ONLY EDIT THIS IF YOU ARE ADDING A NEW FIELD
@@ -49,18 +56,18 @@ export const userSchema = z
 		totpSecret: z.string().optional(),
 		backupCodesEnabled: z.boolean().optional(),
 		backupCodes: z.array(z.string()).optional(),
-		// Metadata - accept any value
-		unsafeMetadata: z.any().optional(),
-		publicMetadata: z.any().optional(),
-		privateMetadata: z.any().optional(),
+		// Metadata
+		unsafeMetadata: metadataSchema.optional(),
+		publicMetadata: metadataSchema.optional(),
+		privateMetadata: metadataSchema.optional(),
 		// Additional Clerk API fields
 		banned: z.boolean().optional(),
 		bypassClientTrust: z.boolean().optional(),
 		createOrganizationEnabled: z.boolean().optional(),
 		createOrganizationsLimit: z.number().int().optional(),
-		createdAt: z.string().optional(),
+		createdAt: dateStringSchema.optional(),
 		deleteSelfEnabled: z.boolean().optional(),
-		legalAcceptedAt: z.string().optional(),
+		legalAcceptedAt: dateStringSchema.optional(),
 		skipLegalChecks: z.boolean().optional(),
 		skipPasswordChecks: z.boolean().optional(),
 	})
@@ -80,14 +87,22 @@ export const userSchema = z
 			// Must have at least one identifier: email, phone, or username
 			const hasVerifiedEmail =
 				hasValue(data.email) || hasValue(data.emailAddresses);
+			const hasUnverifiedEmail = hasValue(data.unverifiedEmailAddresses);
 			const hasVerifiedPhone =
 				hasValue(data.phone) || hasValue(data.phoneNumbers);
+			const hasUnverifiedPhone = hasValue(data.unverifiedPhoneNumbers);
 			const hasUsername = hasValue(data.username);
-			return hasVerifiedEmail || hasVerifiedPhone || hasUsername;
+			return (
+				hasVerifiedEmail ||
+				hasUnverifiedEmail ||
+				hasVerifiedPhone ||
+				hasUnverifiedPhone ||
+				hasUsername
+			);
 		},
 		{
 			message:
-				'User must have at least one identifier (email, phone, or username)',
+				'User must have at least one identifier (email, phone, unverified email, unverified phone, or username)',
 			path: ['email'],
 		}
 	);

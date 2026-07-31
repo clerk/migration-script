@@ -3,6 +3,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 // Create mock functions at module level
 const mockGetUserList = vi.fn();
 const mockDeleteUser = vi.fn();
+const mockSpinner = vi.hoisted(() => ({
+	start: vi.fn(),
+	stop: vi.fn(),
+	message: vi.fn(),
+}));
 
 // Mock @clerk/backend before importing the module
 vi.mock('@clerk/backend', () => ({
@@ -18,11 +23,7 @@ vi.mock('@clerk/backend', () => ({
 vi.mock('@clack/prompts', () => ({
 	intro: vi.fn(),
 	outro: vi.fn(),
-	spinner: vi.fn(() => ({
-		start: vi.fn(),
-		stop: vi.fn(),
-		message: vi.fn(),
-	})),
+	spinner: vi.fn(() => mockSpinner),
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),
@@ -40,30 +41,35 @@ vi.mock('picocolors', () => ({
 }));
 
 // Mock utils
-vi.mock('../src/utils', () => ({
-	getDateTimeStamp: vi.fn(() => '2024-01-01T12:00:00'),
-	createImportFilePath: vi.fn((file: string) => file),
-	getFileType: vi.fn(() => 'application/json'),
-	tryCatch: async (promise: Promise<any>) => {
-		try {
-			const data = await promise;
-			return [data, null];
-		} catch (error) {
-			return [null, error];
-		}
-	},
-	getRetryDelay: (
-		retryCount: number,
-		retryAfterSeconds: number | undefined,
-		defaultDelayMs: number
-	) => {
-		const delayMs = retryAfterSeconds
-			? retryAfterSeconds * 1000
-			: defaultDelayMs;
-		const delaySeconds = retryAfterSeconds || defaultDelayMs / 1000;
-		return { delayMs, delaySeconds };
-	},
-}));
+vi.mock('../src/lib', async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+	const actual = (await importOriginal()) as Record<string, unknown>;
+	return {
+		...actual,
+		getDateTimeStamp: vi.fn(() => '2024-01-01T12:00:00'),
+		createImportFilePath: vi.fn((file: string) => file),
+		getFileType: vi.fn(() => 'application/json'),
+		tryCatch: async (promise: Promise<any>) => {
+			try {
+				const data = await promise;
+				return [data, null];
+			} catch (error) {
+				return [null, error];
+			}
+		},
+		getRetryDelay: (
+			retryCount: number,
+			retryAfterSeconds: number | undefined,
+			defaultDelayMs: number
+		) => {
+			const delayMs = retryAfterSeconds
+				? retryAfterSeconds * 1000
+				: defaultDelayMs;
+			const delaySeconds = retryAfterSeconds || defaultDelayMs / 1000;
+			return { delayMs, delaySeconds };
+		},
+	};
+});
 
 // Mock env constants
 vi.mock('../src/envs-constants', () => ({
@@ -108,10 +114,8 @@ vi.mock('../src/logger', () => ({
 // Import after mocks are set up
 import { deleteErrorLogger, deleteLogger } from '../src/logger';
 import * as fs from 'fs';
-import {
-	getSourceUserIdField,
-	normalizeErrorMessage,
-} from '../src/delete/index';
+import { getSourceUserIdField } from '../src/delete/index';
+import { normalizeErrorMessage } from '../src/lib';
 
 // Get reference to mocked functions - cast to mock type since vi.mocked is not available
 const _mockDeleteErrorLogger = deleteErrorLogger as ReturnType<typeof vi.fn>;
@@ -415,6 +419,24 @@ describe('delete-users', () => {
 
 			expect(mockDeleteUser).toHaveBeenCalledTimes(4);
 			expect(mockDeleteLogger).toHaveBeenCalledTimes(4); // All 4 users logged (2 success + 2 error)
+		});
+
+		test('resets counters between delete runs', async () => {
+			mockDeleteUser.mockResolvedValue({});
+
+			await deleteUsers(
+				[
+					{ id: 'user_1', firstName: 'John' },
+					{ id: 'user_2', firstName: 'Jane' },
+				] as any[],
+				dateTime
+			);
+			await deleteUsers(
+				[{ id: 'user_3', firstName: 'Bob' }] as any[],
+				dateTime
+			);
+
+			expect(mockSpinner.stop).toHaveBeenLastCalledWith('Deleted 1 users');
 		});
 	});
 
