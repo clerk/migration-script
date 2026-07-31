@@ -2,7 +2,6 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 import fs from 'fs';
 import path from 'path';
-import csvParser from 'csv-parser';
 import { transformers } from '../transformers';
 import {
 	firebaseHashConfig,
@@ -13,7 +12,6 @@ import {
 	checkIfFileExists,
 	createImportFilePath,
 	getFileType,
-	transformKeys as transformKeysFromFunctions,
 	tryCatch,
 } from '../lib';
 import {
@@ -23,7 +21,7 @@ import {
 } from '../envs-constants';
 import type { FieldAnalysis, FirebaseHashConfig, Settings } from '../types';
 import { loadSettings, saveSettings } from '../lib/settings';
-import { analyzeFields, validateUsers } from '../lib/analysis';
+import { analyzeFields } from '../lib/analysis';
 import {
 	analyzeUserProviders,
 	fetchSupabaseProviders,
@@ -31,6 +29,12 @@ import {
 	OAUTH_PROVIDER_LABELS,
 } from '../lib/supabase';
 import { detectInstanceType, fetchClerkConfig } from '../lib/clerk';
+import {
+	loadRawUsers as loadRawUsersFromFile,
+	validateUsersForImport,
+} from './functions';
+
+export const loadRawUsers = loadRawUsersFromFile;
 
 /**
  * Parsed command-line arguments for the migration tool
@@ -438,7 +442,7 @@ export async function runNonInteractive(args: CLIArgs): Promise<{
 	}
 
 	// These are guaranteed to be defined after validation
-	const transformer = args.transformer as string;
+	const transformer = args.transformer as (typeof transformers)[number]['key'];
 	const file = args.file as string;
 
 	console.log(`\nClerk User Migration Utility (non-interactive mode)\n`);
@@ -569,79 +573,6 @@ export async function runNonInteractive(args: CLIArgs): Promise<{
 		excludedUserIds: new Set<string>(),
 	};
 }
-
-/**
- * Loads and transforms users from a file without validation
- *
- * Reads users from JSON or CSV files and applies the transformer's field transformations
- * and postTransform logic. Used for analyzing file contents before migration.
- * Does not validate against the schema.
- *
- * @param file - The file path to load users from
- * @param transformerKey - The transformer key identifying which platform to migrate from
- * @returns Array of transformed user objects (not validated)
- * @throws Error if transformer is not found for the given key
- */
-export const loadRawUsers = async (
-	file: string,
-	transformerKey: string
-): Promise<Record<string, unknown>[]> => {
-	let filePath = createImportFilePath(file);
-	const type = getFileType(filePath);
-	const transformer = transformers.find((h) => h.key === transformerKey);
-
-	if (!transformer) {
-		throw new Error(`Transformer not found for key: ${transformerKey}`);
-	}
-
-	// Run preTransform if defined (e.g., Firebase needs to add CSV headers or extract JSON users array)
-	let preExtractedData: Record<string, unknown>[] | undefined;
-	if (typeof transformer.preTransform === 'function') {
-		const preTransformResult = await Promise.resolve(
-			transformer.preTransform(filePath, type || '')
-		);
-		filePath = preTransformResult.filePath;
-		preExtractedData = preTransformResult.data as
-			| Record<string, unknown>[]
-			| undefined;
-	}
-
-	const transformUser = (
-		data: Record<string, unknown>
-	): Record<string, unknown> => {
-		const transformed = transformKeysFromFunctions(data, transformer);
-		// Apply postTransform if defined
-		if (
-			'postTransform' in transformer &&
-			typeof transformer.postTransform === 'function'
-		) {
-			transformer.postTransform(transformed);
-		}
-		return transformed;
-	};
-
-	if (type === 'text/csv') {
-		return new Promise((resolve, reject) => {
-			const users: Record<string, unknown>[] = [];
-			fs.createReadStream(filePath)
-				.pipe(csvParser({ skipComments: true }))
-				.on('data', (data: Record<string, unknown>) =>
-					users.push(transformUser(data))
-				)
-				.on('error', (err) => reject(err))
-				.on('end', () => resolve(users));
-		});
-	}
-
-	// Use pre-extracted data if available (from preTransform), otherwise parse the file
-	const rawUsers = preExtractedData
-		? preExtractedData
-		: (JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<
-				string,
-				unknown
-			>[]);
-	return rawUsers.map((data) => transformUser(data));
-};
 
 // --- Cross-Reference Display ---
 
@@ -1135,7 +1066,7 @@ export async function runCLI(cliArgs?: CLIArgs) {
 
 	// Validate users and log errors so they're available before the readiness display.
 	// Users can cancel after seeing the results and review the log file.
-	const validation = validateUsers(filteredUsers, initialArgs.key);
+	const validation = validateUsersForImport(filteredUsers, initialArgs.key);
 
 	// Step 4: Check instance type and validate
 	const instanceType = detectInstanceType();

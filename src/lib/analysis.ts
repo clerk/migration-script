@@ -1,8 +1,6 @@
 import type { FieldAnalysis, IdentifierCounts } from '../types';
 import { getDateTimeStamp } from './index';
-import { validationLogger } from '../logger';
-import { userSchema } from '../migrate/validator';
-import { transformers } from '../transformers';
+import { validateUsersForImport } from '../migrate/functions';
 
 // Fields to analyze for the import (non-identifier fields)
 export const ANALYZED_FIELDS = [
@@ -133,32 +131,5 @@ export function validateUsers(
 	transformerKey: string
 ): { validationFailed: number; logFile: string } {
 	const dateTime = getDateTimeStamp();
-	const logFile = `migration-${dateTime}.log`;
-	let validationFailed = 0;
-
-	// Look up transformer defaults (e.g., Supabase adds passwordHasher: "bcrypt")
-	const transformer = transformers.find((obj) => obj.key === transformerKey);
-	const defaultFields =
-		transformer && 'defaults' in transformer ? transformer.defaults : null;
-
-	for (let i = 0; i < users.length; i++) {
-		const user = defaultFields ? { ...users[i], ...defaultFields } : users[i];
-		const result = userSchema.safeParse(user);
-
-		if (!result.success) {
-			validationFailed++;
-			const firstIssue = result.error.issues[0];
-			validationLogger(
-				{
-					error: firstIssue.message,
-					path: firstIssue.path as (string | number)[],
-					userId: (user.userId as string) || `row-${i}`,
-					row: i,
-				},
-				dateTime
-			);
-		}
-	}
-
-	return { validationFailed, logFile };
+	return validateUsersForImport(users, transformerKey, dateTime);
 }

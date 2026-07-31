@@ -1549,13 +1549,13 @@ describe('loadRawUsers', () => {
 			userId: 'user_123',
 			firstName: 'John',
 			lastName: 'Doe',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[1]).toEqual({
 			userId: 'user_456',
 			firstName: 'Jane',
 			lastName: 'Smith',
-			email: 'jane@example.com',
+			email: ['jane@example.com'],
 		});
 	});
 
@@ -1576,7 +1576,7 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			firstName: 'John',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[0]).not.toHaveProperty('lastName');
 	});
@@ -1598,7 +1598,7 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			firstName: 'John',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[0]).not.toHaveProperty('publicMetadata');
 	});
@@ -1620,7 +1620,7 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			firstName: 'John',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 		expect(result[0]).not.toHaveProperty('lastName');
 	});
@@ -1649,6 +1649,7 @@ describe('loadRawUsers', () => {
 			userId: 'uuid-123',
 			email: 'john@example.com',
 			password: '$2a$10$hash',
+			passwordHasher: 'bcrypt',
 		});
 	});
 
@@ -1680,6 +1681,7 @@ describe('loadRawUsers', () => {
 			lastName: 'Doe',
 			phone: '+1234567890',
 			createdAt: '2025-01-15T10:30:00.000Z',
+			passwordHasher: 'bcrypt',
 		});
 	});
 
@@ -1768,7 +1770,7 @@ describe('loadRawUsers', () => {
 		expect(result[0]).toEqual({
 			userId: 'user_123',
 			customField: 'custom value',
-			email: 'john@example.com',
+			email: ['john@example.com'],
 		});
 	});
 });
