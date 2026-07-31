@@ -32,16 +32,10 @@ export type { FirebaseHashConfig } from '../types';
  * Values set here take precedence over .settings file
  */
 export const firebaseHashConfig: FirebaseHashConfig = {
-	// base64_signer_key: undefined,
-	// base64_salt_separator: undefined,
-	// rounds: undefined,
-	// mem_cost: undefined,
-	//
-	base64_signer_key:
-		'JbDJcvJ8lq1cSWILYAfwWU66EdgTszlHKHtsP01us8gGIhiRUFpns5sgVL4Wq6gdStEhF0XaZwTsgACxmQJBJA==',
-	base64_salt_separator: 'Bw==',
-	rounds: 8,
-	mem_cost: 14,
+	base64_signer_key: undefined,
+	base64_salt_separator: undefined,
+	rounds: undefined,
+	mem_cost: undefined,
 };
 
 /**
@@ -160,6 +154,12 @@ const firebaseTransformer = {
 		const salt = user.salt as string | undefined;
 
 		if (passwordHash && salt) {
+			if (!isFirebaseHashConfigComplete()) {
+				throw new Error(
+					'Firebase hash configuration is required to migrate password hashes. Provide all Firebase hash parameters via CLI options, interactive setup, or saved settings.'
+				);
+			}
+
 			user.password = `${passwordHash}$${salt}$${firebaseHashConfig.base64_signer_key}$${firebaseHashConfig.base64_salt_separator}$${firebaseHashConfig.rounds}$${firebaseHashConfig.mem_cost}`;
 
 			// Clean up intermediate fields

@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import firebaseTransformer, {
+	firebaseHashConfig,
+	isFirebaseHashConfigComplete,
+	setFirebaseHashConfig,
+} from '../src/transformers/firebase';
 
 /**
  * Tests to ensure all transformers are properly registered in index.ts
@@ -173,5 +178,55 @@ describe('transformer registration', () => {
 				).toBe(true);
 			}
 		);
+	});
+});
+
+describe('Firebase transformer hash configuration', () => {
+	const resetFirebaseHashConfig = () => {
+		firebaseHashConfig.base64_signer_key = undefined;
+		firebaseHashConfig.base64_salt_separator = undefined;
+		firebaseHashConfig.rounds = undefined;
+		firebaseHashConfig.mem_cost = undefined;
+	};
+
+	test('starts without bundled Firebase hash parameters', () => {
+		resetFirebaseHashConfig();
+
+		expect(isFirebaseHashConfigComplete()).toBe(false);
+	});
+
+	test('throws when transforming password hashes without hash config', () => {
+		resetFirebaseHashConfig();
+		const user: Record<string, unknown> = {
+			userId: 'firebase_user',
+			passwordHash: 'hash',
+			salt: 'salt',
+		};
+
+		expect(() => firebaseTransformer.postTransform(user)).toThrow(
+			'Firebase hash configuration is required'
+		);
+	});
+
+	test('uses provided hash config for password hashes', () => {
+		resetFirebaseHashConfig();
+		setFirebaseHashConfig({
+			base64_signer_key: 'signer',
+			base64_salt_separator: 'separator',
+			rounds: 8,
+			mem_cost: 14,
+		});
+		const user: Record<string, unknown> = {
+			userId: 'firebase_user',
+			passwordHash: 'hash',
+			salt: 'salt',
+		};
+
+		firebaseTransformer.postTransform(user);
+
+		expect(user.password).toBe('hash$salt$signer$separator$8$14');
+		expect(user.passwordHash).toBeUndefined();
+		expect(user.salt).toBeUndefined();
+		resetFirebaseHashConfig();
 	});
 });
