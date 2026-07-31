@@ -24,9 +24,24 @@ export const getDateTimeStamp = () => {
  * @param file - The relative file path (e.g., "samples/users.json")
  * @returns The absolute file path
  */
-export const createImportFilePath = (file: string) => {
-	return path.join(__dirname, '..', '..', file);
+export const resolveImportFilePath = (file: string) => {
+	const trimmedFile = file.trim();
+
+	if (
+		path.isAbsolute(trimmedFile) &&
+		trimmedFile.startsWith(`${path.sep}samples${path.sep}`)
+	) {
+		return path.join(process.cwd(), trimmedFile.slice(1));
+	}
+
+	if (path.isAbsolute(trimmedFile)) {
+		return trimmedFile;
+	}
+
+	return path.resolve(process.cwd(), trimmedFile);
 };
+
+export const createImportFilePath = resolveImportFilePath;
 
 /**
  * Checks if a file exists at the specified path

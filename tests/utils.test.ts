@@ -44,11 +44,30 @@ describe('createImportFilePath', () => {
 		expect(result).toContain('users.json');
 		expect(path.isAbsolute(result)).toBe(true);
 	});
+
+	test('keeps absolute paths outside samples unchanged', () => {
+		const absolutePath = path.join(path.sep, 'tmp', 'users.json');
+
+		expect(createImportFilePath(absolutePath)).toBe(absolutePath);
+	});
+
+	test('keeps project-rooted absolute paths unchanged', () => {
+		const absolutePath = path.join(process.cwd(), 'samples', 'clerk.json');
+
+		expect(createImportFilePath(absolutePath)).toBe(absolutePath);
+	});
 });
 
 describe('checkIfFileExists', () => {
 	test('returns true for existing file', () => {
 		const result = checkIfFileExists('/samples/clerk.json');
+		expect(result).toBe(true);
+	});
+
+	test('returns true for existing absolute file', () => {
+		const result = checkIfFileExists(
+			path.join(process.cwd(), 'samples', 'clerk.json')
+		);
 		expect(result).toBe(true);
 	});
 
@@ -66,6 +85,13 @@ describe('checkIfFileExists', () => {
 describe('getFileType', () => {
 	test('returns application/json for .json files', () => {
 		const result = getFileType('/samples/clerk.json');
+		expect(result).toBe('application/json');
+	});
+
+	test('returns application/json for absolute .json files', () => {
+		const result = getFileType(
+			path.join(process.cwd(), 'samples', 'clerk.json')
+		);
 		expect(result).toBe('application/json');
 	});
 
