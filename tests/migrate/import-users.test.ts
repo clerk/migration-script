@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 // Mock @clerk/backend before importing the module
 const mockCreateUser = vi.fn();
+const mockUpdateUser = vi.fn();
+const mockBanUser = vi.fn();
 const mockCreateEmailAddress = vi.fn();
 const mockCreatePhoneNumber = vi.fn();
 vi.mock('@clerk/backend', () => ({
 	createClerkClient: vi.fn(() => ({
 		users: {
 			createUser: mockCreateUser,
+			updateUser: mockUpdateUser,
+			banUser: mockBanUser,
 		},
 		emailAddresses: {
 			createEmailAddress: mockCreateEmailAddress,
@@ -133,8 +137,6 @@ describe('importUsers', () => {
 				passwordDigest: '$2a$10$hashedpassword',
 				passwordHasher: 'bcrypt',
 				username: 'johndoe',
-				phoneNumber: undefined,
-				totpSecret: undefined,
 			});
 		});
 
@@ -159,9 +161,6 @@ describe('importUsers', () => {
 				firstName: 'Jane',
 				lastName: 'Smith',
 				skipPasswordRequirement: true,
-				username: undefined,
-				phoneNumber: undefined,
-				totpSecret: undefined,
 			});
 		});
 
@@ -217,6 +216,105 @@ describe('importUsers', () => {
 					totpSecret: 'JBSWY3DPEHPK3PXP',
 				})
 			);
+		});
+
+		test('converts supported dates and updates post-create fields', async () => {
+			mockCreateUser.mockResolvedValue({ id: 'user_created' });
+			mockUpdateUser.mockResolvedValue({ id: 'user_created' });
+
+			const users = [
+				{
+					userId: 'user_settings',
+					email: ['settings@example.com'],
+					createdAt: '2025-01-15T10:30:00.000Z',
+					legalAcceptedAt: '2025-01-16T10:30:00.000Z',
+					createOrganizationEnabled: true,
+					createOrganizationsLimit: 3,
+					deleteSelfEnabled: false,
+				},
+			];
+
+			await importUsers(users);
+
+			expect(mockCreateUser).toHaveBeenCalledWith(
+				expect.objectContaining({
+					createdAt: new Date('2025-01-15T10:30:00.000Z'),
+					legalAcceptedAt: new Date('2025-01-16T10:30:00.000Z'),
+				})
+			);
+			expect(mockCreateUser).not.toHaveBeenCalledWith(
+				expect.objectContaining({
+					createOrganizationEnabled: true,
+					createOrganizationsLimit: 3,
+					deleteSelfEnabled: false,
+				})
+			);
+			expect(mockUpdateUser).toHaveBeenCalledWith('user_created', {
+				createOrganizationEnabled: true,
+				createOrganizationsLimit: 3,
+				deleteSelfEnabled: false,
+			});
+		});
+
+		test('bans users after creation when requested', async () => {
+			mockCreateUser.mockResolvedValue({ id: 'user_created' });
+			mockBanUser.mockResolvedValue({ id: 'user_created' });
+
+			const users = [
+				{
+					userId: 'user_banned',
+					email: ['banned@example.com'],
+					banned: true,
+				},
+			];
+
+			await importUsers(users);
+
+			expect(mockCreateUser).not.toHaveBeenCalledWith(
+				expect.objectContaining({ banned: true })
+			);
+			expect(mockBanUser).toHaveBeenCalledWith('user_created');
+		});
+
+		test('adds verified and unverified additional identifiers with flags', async () => {
+			mockCreateUser.mockResolvedValue({ id: 'user_created' });
+
+			const users = [
+				{
+					userId: 'user_identifiers',
+					email: ['primary@example.com', 'verified@example.com'],
+					unverifiedEmailAddresses: ['unverified@example.com'],
+					phone: ['+10000000000', '+12222222222'],
+					unverifiedPhoneNumbers: ['+13333333333'],
+				},
+			];
+
+			await importUsers(users);
+
+			expect(mockCreateEmailAddress).toHaveBeenCalledWith({
+				userId: 'user_created',
+				emailAddress: 'verified@example.com',
+				primary: false,
+				verified: true,
+			});
+			expect(mockCreateEmailAddress).toHaveBeenCalledWith({
+				userId: 'user_created',
+				emailAddress: 'unverified@example.com',
+				primary: false,
+				verified: false,
+			});
+			expect(mockCreatePhoneNumber).toHaveBeenCalledWith({
+				userId: 'user_created',
+				phoneNumber: '+12222222222',
+				primary: false,
+				verified: true,
+			});
+			expect(mockCreatePhoneNumber).toHaveBeenCalledWith({
+				userId: 'user_created',
+				phoneNumber: '+13333333333',
+				primary: false,
+				verified: false,
+			});
 		});
 	});
 
@@ -442,6 +540,7 @@ describe('importUsers edge cases', () => {
 			userId: 'user_full_created',
 			emailAddress: 'secondary@example.com',
 			primary: false,
+			verified: true,
 		});
 	});
 
@@ -475,11 +574,13 @@ describe('importUsers edge cases', () => {
 			userId: 'user_multi_email',
 			emailAddress: 'second@example.com',
 			primary: false,
+			verified: true,
 		});
 		expect(mockCreateEmailAddress).toHaveBeenCalledWith({
 			userId: 'user_multi_email',
 			emailAddress: 'third@example.com',
 			primary: false,
+			verified: true,
 		});
 	});
 
@@ -526,11 +627,13 @@ describe('importUsers edge cases', () => {
 			userId: 'user_multi_phone',
 			phoneNumber: '+2222222222',
 			primary: false,
+			verified: true,
 		});
 		expect(mockCreatePhoneNumber).toHaveBeenCalledWith({
 			userId: 'user_multi_phone',
 			phoneNumber: '+3333333333',
 			primary: false,
+			verified: true,
 		});
 	});
 

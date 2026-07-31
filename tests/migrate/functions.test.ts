@@ -490,8 +490,8 @@ describe('Clerk transformer - email and phone parsing with pipe separators', () 
 
 		expect(userWithPipeSeparatedPhones).toBeDefined();
 		expect(Array.isArray(userWithPipeSeparatedPhones?.phone)).toBe(true);
-		expect(userWithPipeSeparatedPhones?.phone).toEqual([
-			'+12125550200',
+		expect(userWithPipeSeparatedPhones?.phone).toEqual(['+12125550200']);
+		expect(userWithPipeSeparatedPhones?.unverifiedPhoneNumbers).toEqual([
 			'+12125550201',
 		]);
 	});
@@ -505,8 +505,8 @@ describe('Clerk transformer - email and phone parsing with pipe separators', () 
 
 		expect(userWithMixedSeparators).toBeDefined();
 		expect(Array.isArray(userWithMixedSeparators?.email)).toBe(true);
-		expect(userWithMixedSeparators?.email).toEqual([
-			'first@test.com',
+		expect(userWithMixedSeparators?.email).toEqual(['first@test.com']);
+		expect(userWithMixedSeparators?.unverifiedEmailAddresses).toEqual([
 			'second@test.com',
 			'third@test.com',
 		]);
@@ -521,8 +521,8 @@ describe('Clerk transformer - email and phone parsing with pipe separators', () 
 
 		expect(userWithMixedPhoneSeparators).toBeDefined();
 		expect(Array.isArray(userWithMixedPhoneSeparators?.phone)).toBe(true);
-		expect(userWithMixedPhoneSeparators?.phone).toEqual([
-			'+12125550300',
+		expect(userWithMixedPhoneSeparators?.phone).toEqual(['+12125550300']);
+		expect(userWithMixedPhoneSeparators?.unverifiedPhoneNumbers).toEqual([
 			'+12125550301',
 		]);
 	});

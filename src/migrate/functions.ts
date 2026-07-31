@@ -217,14 +217,21 @@ const consolidateClerkIdentifiers = (
 
 	const allEmails: string[] = [];
 	if (primaryEmail) allEmails.push(primaryEmail);
-	for (const email of [...verifiedEmails, ...unverifiedEmails]) {
+	for (const email of verifiedEmails) {
 		if (!allEmails.includes(email)) allEmails.push(email);
 	}
 	if (allEmails.length > 0) {
 		transformedUser.email = allEmails;
 	}
 	delete transformedUser.emailAddresses;
-	delete transformedUser.unverifiedEmailAddresses;
+	const additionalUnverifiedEmails = unverifiedEmails.filter(
+		(email) => !allEmails.includes(email)
+	);
+	if (additionalUnverifiedEmails.length > 0) {
+		transformedUser.unverifiedEmailAddresses = additionalUnverifiedEmails;
+	} else {
+		delete transformedUser.unverifiedEmailAddresses;
+	}
 
 	const primaryPhone = transformedUser.phone as string | undefined;
 	const verifiedPhones = parseDelimitedStrings(transformedUser.phoneNumbers);
@@ -234,14 +241,21 @@ const consolidateClerkIdentifiers = (
 
 	const allPhones: string[] = [];
 	if (primaryPhone) allPhones.push(primaryPhone);
-	for (const phone of [...verifiedPhones, ...unverifiedPhones]) {
+	for (const phone of verifiedPhones) {
 		if (!allPhones.includes(phone)) allPhones.push(phone);
 	}
 	if (allPhones.length > 0) {
 		transformedUser.phone = allPhones;
 	}
 	delete transformedUser.phoneNumbers;
-	delete transformedUser.unverifiedPhoneNumbers;
+	const additionalUnverifiedPhones = unverifiedPhones.filter(
+		(phone) => !allPhones.includes(phone)
+	);
+	if (additionalUnverifiedPhones.length > 0) {
+		transformedUser.unverifiedPhoneNumbers = additionalUnverifiedPhones;
+	} else {
+		delete transformedUser.unverifiedPhoneNumbers;
+	}
 };
 
 const validatePreparedUsers = (

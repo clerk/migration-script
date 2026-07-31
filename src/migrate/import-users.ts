@@ -51,25 +51,51 @@ async function createUser(
 ) {
 	const clerk = createClerkClient({ secretKey: env.CLERK_SECRET_KEY });
 
-	// Extract primary email and additional emails
-	let emails: string[] = [];
-	if (userData.email) {
-		emails = Array.isArray(userData.email) ? userData.email : [userData.email];
-	}
-	const primaryEmail = emails[0];
-	const additionalEmails = emails.slice(1);
+	const toArray = (value: string | string[] | undefined): string[] => {
+		if (!value) return [];
+		return Array.isArray(value) ? value : [value];
+	};
 
-	// Extract primary phone and additional phones
-	let phones: string[] = [];
-	if (userData.phone) {
-		phones = Array.isArray(userData.phone) ? userData.phone : [userData.phone];
-	}
-	const primaryPhone = phones[0];
-	const additionalPhones = phones.slice(1);
+	const dedupe = (values: string[]) => {
+		const deduped: string[] = [];
+		for (const value of values) {
+			if (value && !deduped.includes(value)) {
+				deduped.push(value);
+			}
+		}
+		return deduped;
+	};
 
-	// Build user params dynamically based on available fields
-	// Using Record type to allow dynamic property assignment for password hashing params
-	const userParams: Record<string, unknown> = {
+	const verifiedEmails = dedupe([
+		...toArray(userData.email),
+		...toArray(userData.emailAddresses),
+	]);
+	const unverifiedEmails = dedupe(
+		toArray(userData.unverifiedEmailAddresses).filter(
+			(email) => !verifiedEmails.includes(email)
+		)
+	);
+	const primaryEmail = verifiedEmails[0];
+	const additionalEmails = verifiedEmails.slice(1);
+
+	const verifiedPhones = dedupe([
+		...toArray(userData.phone),
+		...toArray(userData.phoneNumbers),
+	]);
+	const unverifiedPhones = dedupe(
+		toArray(userData.unverifiedPhoneNumbers).filter(
+			(phone) => !verifiedPhones.includes(phone)
+		)
+	);
+	const primaryPhone = verifiedPhones[0];
+	const additionalPhones = verifiedPhones.slice(1);
+
+	const toDate = (value: string | undefined) => {
+		if (!value) return undefined;
+		return new Date(value);
+	};
+
+	const userParams: Parameters<typeof clerk.users.createUser>[0] = {
 		externalId: userData.userId,
 	};
 
@@ -90,19 +116,9 @@ async function createUser(
 	if (userData.publicMetadata)
 		userParams.publicMetadata = userData.publicMetadata;
 
-	// Additional Clerk API fields
-	if (userData.banned !== undefined) userParams.banned = userData.banned;
-	if (userData.bypassClientTrust !== undefined)
-		userParams.bypassClientTrust = userData.bypassClientTrust;
-	if (userData.createOrganizationEnabled !== undefined)
-		userParams.createOrganizationEnabled = userData.createOrganizationEnabled;
-	if (userData.createOrganizationsLimit !== undefined)
-		userParams.createOrganizationsLimit = userData.createOrganizationsLimit;
-	if (userData.createdAt) userParams.createdAt = userData.createdAt;
-	if (userData.deleteSelfEnabled !== undefined)
-		userParams.deleteSelfEnabled = userData.deleteSelfEnabled;
+	if (userData.createdAt) userParams.createdAt = toDate(userData.createdAt);
 	if (userData.legalAcceptedAt)
-		userParams.legalAcceptedAt = userData.legalAcceptedAt;
+		userParams.legalAcceptedAt = toDate(userData.legalAcceptedAt);
 	if (userData.skipLegalChecks !== undefined)
 		userParams.skipLegalChecks = userData.skipLegalChecks;
 	if (userData.skipPasswordChecks !== undefined)
@@ -110,8 +126,10 @@ async function createUser(
 
 	// Handle password - if present, include digest and hasher; otherwise skip password requirement if allowed
 	if (userData.password && userData.passwordHasher) {
-		userParams.passwordDigest = userData.password;
-		userParams.passwordHasher = userData.passwordHasher;
+		Object.assign(userParams, {
+			passwordDigest: userData.password,
+			passwordHasher: userData.passwordHasher,
+		});
 	} else if (skipPasswordRequirement) {
 		userParams.skipPasswordRequirement = true;
 	}
@@ -120,11 +138,7 @@ async function createUser(
 	// Create the user with the primary email
 	// Rate-limited via the shared limiter
 	const [createdUser, createError] = await tryCatch(
-		limit(() =>
-			clerk.users.createUser(
-				userParams as Parameters<typeof clerk.users.createUser>[0]
-			)
-		)
+		limit(() => clerk.users.createUser(userParams))
 	);
 
 	if (createError) {
@@ -143,6 +157,7 @@ async function createUser(
 						userId: createdUser.id,
 						emailAddress: email,
 						primary: false,
+						verified: true,
 					})
 				);
 
@@ -178,6 +193,7 @@ async function createUser(
 						userId: createdUser.id,
 						phoneNumber: phone,
 						primary: false,
+						verified: true,
 					})
 				);
 
@@ -201,8 +217,95 @@ async function createUser(
 			})
 		);
 
-	// Wait for all additional identifiers to be created
-	await Promise.all([...emailPromises, ...phonePromises]);
+	const unverifiedEmailPromises = unverifiedEmails
+		.filter((email) => email)
+		.map((email) =>
+			limit(async () => {
+				const [, emailError] = await tryCatch(
+					clerk.emailAddresses.createEmailAddress({
+						userId: createdUser.id,
+						emailAddress: email,
+						primary: false,
+						verified: false,
+					})
+				);
+
+				if (emailError) {
+					errorLogger(
+						{
+							userId: userData.userId,
+							status: 'additional_email_error',
+							errors: [
+								{
+									code: 'additional_email_failed',
+									message: `Failed to add unverified email ${email}`,
+									longMessage: `Failed to add unverified email ${email}: ${emailError.message}`,
+								},
+							],
+						},
+						dateTime
+					);
+				}
+			})
+		);
+
+	const unverifiedPhonePromises = unverifiedPhones
+		.filter((phone) => phone)
+		.map((phone) =>
+			limit(async () => {
+				const [, phoneError] = await tryCatch(
+					clerk.phoneNumbers.createPhoneNumber({
+						userId: createdUser.id,
+						phoneNumber: phone,
+						primary: false,
+						verified: false,
+					})
+				);
+
+				if (phoneError) {
+					errorLogger(
+						{
+							userId: userData.userId,
+							status: 'additional_phone_error',
+							errors: [
+								{
+									code: 'additional_phone_failed',
+									message: `Failed to add unverified phone ${phone}`,
+									longMessage: `Failed to add unverified phone ${phone}: ${phoneError.message}`,
+								},
+							],
+						},
+						dateTime
+					);
+				}
+			})
+		);
+
+	await Promise.all([
+		...emailPromises,
+		...phonePromises,
+		...unverifiedEmailPromises,
+		...unverifiedPhonePromises,
+	]);
+
+	const updateParams: Parameters<typeof clerk.users.updateUser>[1] = {};
+	if (userData.createOrganizationEnabled !== undefined) {
+		updateParams.createOrganizationEnabled = userData.createOrganizationEnabled;
+	}
+	if (userData.createOrganizationsLimit !== undefined) {
+		updateParams.createOrganizationsLimit = userData.createOrganizationsLimit;
+	}
+	if (userData.deleteSelfEnabled !== undefined) {
+		updateParams.deleteSelfEnabled = userData.deleteSelfEnabled;
+	}
+
+	if (Object.keys(updateParams).length > 0) {
+		await limit(() => clerk.users.updateUser(createdUser.id, updateParams));
+	}
+
+	if (userData.banned) {
+		await limit(() => clerk.users.banUser(createdUser.id));
+	}
 
 	return createdUser;
 }
